@@ -1,0 +1,59 @@
+name: CICD
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+jobs:
+  ###############################################
+  # Run tests and publish coverage to codecov.io
+  ###############################################
+  cicd:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: 11
+          distribution: 'zulu'
+      - name: Compile
+        run: ./gradlew classes testClasses
+        env:
+          PACKAGE_USER: ${{ secrets.PACKAGES_PAT_USER }}
+          PACKAGE_TOKEN: ${{ secrets.PACKAGES_PAT }}
+      - name: Lint
+        run: ./gradlew ktlintCheck
+      - name: Test
+        run: ./gradlew test
+      - name: Publish Coverage
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          # TODO: true once codecov is setup for the repo
+          fail_ci_if_error: false
+          file: ./codecov/test/jacocoTestReport.xml
+      - name: ACR setup
+        # TODO: once done prototyping, only master should actually push artifacts
+        # if: success() && github.ref == 'refs/heads/master'
+        uses: azure/docker-login@v1
+        with:
+          login-server: projectronin.azurecr.io
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Publish Snapshot
+        # TODO: once done prototyping, only master should actually push artifacts
+        # if: success() && github.ref == 'refs/heads/master'
+        shell: bash
+        run: |
+          HEAD_REF=${{ github.head_ref }}
+          REF=${{ github.ref }}
+          BRANCH=$(echo "${HEAD_REF}$(echo ${REF##*/} | sed 's/merge//')")
+          DOCKER_TAG_DATE="$(date +%Y%m%d)"
+          DOCKER_TAG_BRANCH="$(echo ${BRANCH:0:15} | sed 's/\//-/g' | sed 's/-$/X/')"
+          DOCKER_TAG_HASH="$(git rev-parse --short HEAD)"
+          export DOCKER_TAG="${DOCKER_TAG_DATE}-${DOCKER_TAG_BRANCH}-${DOCKER_TAG_HASH}"
+          ./gradlew publish
+        env:
+          PACKAGE_USER: ${{ secrets.PACKAGES_PAT_USER }}
+          PACKAGE_TOKEN: ${{ secrets.PACKAGES_PAT }}
