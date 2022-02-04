@@ -2,6 +2,7 @@ rootProject.name = "ronin-common"
 
 include("http-client")
 include("boot-security")
+include("test")
 
 pluginManagement {
     repositories {
