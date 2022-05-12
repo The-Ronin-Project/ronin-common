@@ -7,13 +7,24 @@ include("test")
 pluginManagement {
     repositories {
         maven {
-            url = uri("https://maven.pkg.github.com/projectronin/package-repo")
-            credentials {
-                username = System.getenv("PACKAGE_USER")
-                password = System.getenv("PACKAGE_TOKEN")
+            url = uri("https://repo.devops.projectronin.io/repository/maven-snapshots/")
+            mavenContent {
+                snapshotsOnly()
             }
         }
-        mavenCentral()
+        maven {
+            url = uri("https://repo.devops.projectronin.io/repository/maven-releases/")
+            mavenContent {
+                releasesOnly()
+            }
+        }
+        maven {
+            url = uri("https://repo.devops.projectronin.io/repository/maven-public/")
+            mavenContent {
+                releasesOnly()
+            }
+        }
+        mavenLocal()
         gradlePluginPortal()
     }
 }
