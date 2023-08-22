@@ -1,46 +1,24 @@
-name: CICD
+name: Kotlin CI/CD
+
 on:
   push:
-    branches: [master]
+    branches:
+      - main
+      - v*
+    tags:
+      - 'v*.*.*'
   pull_request:
+
 jobs:
-  ###############################################
-  # Run tests and publish coverage to codecov.io
-  ###############################################
-  cicd:
+  build_and_test:
     runs-on: self-hosted
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v2
+      - name: test and build
+        uses: projectronin/github/.github/actions/basic-gradle-build-publish@basic_gradle_build_publish/v1
         with:
-          java-version: 17
-          distribution: "zulu"
-
-      - name: Compile
-        run: ./gradlew classes testClasses
-        env:
-          PACKAGE_USER: ${{ secrets.PACKAGES_PAT_USER }}
-          PACKAGE_TOKEN: ${{ secrets.PACKAGES_PAT }}
-
-      - name: Lint
-        run: ./gradlew ktlintCheck
-
-      - name: Test
-        run: ./gradlew test
-
-      - name: Publish Coverage
-        uses: codecov/codecov-action@v2
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          # TODO: true once codecov is setup for the repo
-          fail_ci_if_error: false
-          file: ./codecov/test/jacocoTestReport.xml
-
-      - name: Publish Snapshot
-        run: ./gradlew publish
-        env:
-          NEXUS_USER: ${{ secrets.NEXUS_MAVEN_USER }}
-          NEXUS_TOKEN: ${{ secrets.NEXUS_MAVEN_TOKEN }}
+          nexus_user: ${{ secrets.NEXUS_MAVEN_USER }}
+          nexus_token: ${{ secrets.NEXUS_MAVEN_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          sonar_token: ${{ secrets.SONAR_TOKEN }}
+          sonar_host_url: ${{ secrets.SONAR_HOST_URL }}
+          codecov_token: ${{ secrets.CODECOV_TOKEN }}
