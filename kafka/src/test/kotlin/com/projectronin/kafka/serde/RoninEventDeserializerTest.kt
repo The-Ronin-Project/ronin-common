@@ -18,7 +18,6 @@ class RoninEventDeserializerTest {
     private data class Stuff(val id: String)
 
     private val fixedInstant: Instant = Instant.ofEpochSecond(1660000000)
-    private val testId: UUID? = UUID.fromString("350e8400-e29b-41d4-a716-000000000000")
     private val typeValue = "stuff:com.projectronin.kafka.serde.RoninEventDeserializerTest\$Stuff"
 
     @Test
@@ -32,6 +31,7 @@ class RoninEventDeserializerTest {
 
     @Test
     fun `deserialize with complete headers`() {
+        val testId: UUID? = UUID.fromString("34893a18-0053-4042-ad00-efe101fdaa09")
         val deserializer = RoninEventDeserializer<Stuff>()
         deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to typeValue), false)
         val headers = RecordHeaders(
@@ -61,6 +61,7 @@ class RoninEventDeserializerTest {
 
     @Test
     fun `deserialize missing required headers error`() {
+        val testId: UUID? = UUID.fromString("34893a18-0053-4042-ad00-efe101fdaa09")
         val deserializer = RoninEventDeserializer<Stuff>()
         deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to typeValue), false)
         assertThatThrownBy {
@@ -81,6 +82,7 @@ class RoninEventDeserializerTest {
 
     @Test
     fun `deserialize missing type in map error`() {
+        val testId: UUID? = UUID.fromString("34893a18-0053-4042-ad00-efe101fdaa09")
         val deserializer = RoninEventDeserializer<Stuff>()
         deserializer.configure(
             mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to "foor:${Stuff::class.java.name}"),
@@ -105,6 +107,7 @@ class RoninEventDeserializerTest {
 
     @Test
     fun `deserialize bad data error`() {
+        val testId: UUID? = UUID.fromString("34893a18-0053-4042-ad00-efe101fdaa09")
         val deserializer = RoninEventDeserializer<Stuff>()
         deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to typeValue), false)
         assertThatThrownBy {
@@ -151,6 +154,7 @@ class RoninEventDeserializerTest {
 
     @Test
     fun `deserialize with no version`() {
+        val testId: UUID? = UUID.fromString("34893a18-0053-4042-ad00-efe101fdaa09")
         val deserializer = RoninEventDeserializer<Stuff>()
         deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to typeValue), false)
         assertThatThrownBy {
