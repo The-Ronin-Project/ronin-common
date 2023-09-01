@@ -1,8 +1,24 @@
 [versions]
-
+assertj = "3.23.1"
+jackson = "2.15.2"
+kafka = "3.2.1"
+kotlinlogging = "3.0.5"
+mockk = "1.13.5"
 
 [libraries]
+jackson = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
+jackson-module-parameterNames= { module = "com.fasterxml.jackson.module:jackson-module-parameter-names", version.ref = "jackson" }
 
+kafka = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
+kafka-streams = { module = "org.apache.kafka:kafka-streams", version.ref = "kafka" }
+kafka-streams-test-utils = { module = "org.apache.kafka:kafka-streams-test-utils", version.ref = "kafka" }
+
+kotlinlogging = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "kotlinlogging" }
+
+# Test Libraries
+assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 [bundles]
 
