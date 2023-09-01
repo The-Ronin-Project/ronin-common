@@ -12,7 +12,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 class RoninEventDeserializerTest {
     private data class Stuff(val id: String)
@@ -31,7 +31,7 @@ class RoninEventDeserializerTest {
 
     @Test
     fun `deserialize with complete headers`() {
-        val testId: UUID? = UUID.fromString("34893a18-0053-4042-ad00-efe101fdaa09")
+        val testId: UUID = UUID.randomUUID()
         val deserializer = RoninEventDeserializer<Stuff>()
         deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to typeValue), false)
         val headers = RecordHeaders(
@@ -60,8 +60,38 @@ class RoninEventDeserializerTest {
     }
 
     @Test
+    fun `deserialize with future version`() {
+        val testId: UUID = UUID.randomUUID()
+        val deserializer = RoninEventDeserializer<Stuff>()
+        deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to typeValue), false)
+        val headers = RecordHeaders(
+            mutableListOf(
+                StringHeader(RoninEventHeaders.ID, testId.toString()),
+                StringHeader(RoninEventHeaders.SOURCE, "test"),
+                StringHeader(RoninEventHeaders.VERSION, "3"),
+                StringHeader(RoninEventHeaders.TYPE, "stuff"),
+                StringHeader(RoninEventHeaders.CONTENT_TYPE, "content"),
+                StringHeader(RoninEventHeaders.DATA_SCHEMA, "schema"),
+                StringHeader(RoninEventHeaders.TIME, "2022-08-08T23:06:40Z"),
+                StringHeader(RoninEventHeaders.SUBJECT, "stuff/3")
+            )
+        )
+        val event = deserializer.deserialize("topic", headers, "{\"id\":\"3\"}".encodeToByteArray())
+
+        assertThat(event).isNotNull
+        assertThat(event.id).isEqualTo(testId)
+        assertThat(event.source).isEqualTo("test")
+        assertThat(event.version).isEqualTo("3")
+        assertThat(event.type).isEqualTo("stuff")
+        assertThat(event.dataContentType).isEqualTo("content")
+        assertThat(event.dataSchema).isEqualTo("schema")
+        assertThat(event.time).isEqualTo(fixedInstant)
+        assertThat(event.data).isEqualTo(Stuff("3"))
+    }
+
+    @Test
     fun `deserialize missing required headers error`() {
-        val testId: UUID? = UUID.fromString("34893a18-0053-4042-ad00-efe101fdaa09")
+        val testId: UUID = UUID.randomUUID()
         val deserializer = RoninEventDeserializer<Stuff>()
         deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to typeValue), false)
         assertThatThrownBy {
@@ -82,7 +112,7 @@ class RoninEventDeserializerTest {
 
     @Test
     fun `deserialize missing type in map error`() {
-        val testId: UUID? = UUID.fromString("34893a18-0053-4042-ad00-efe101fdaa09")
+        val testId: UUID = UUID.randomUUID()
         val deserializer = RoninEventDeserializer<Stuff>()
         deserializer.configure(
             mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to "foor:${Stuff::class.java.name}"),
@@ -107,7 +137,7 @@ class RoninEventDeserializerTest {
 
     @Test
     fun `deserialize bad data error`() {
-        val testId: UUID? = UUID.fromString("34893a18-0053-4042-ad00-efe101fdaa09")
+        val testId: UUID = UUID.randomUUID()
         val deserializer = RoninEventDeserializer<Stuff>()
         deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to typeValue), false)
         assertThatThrownBy {
@@ -154,7 +184,7 @@ class RoninEventDeserializerTest {
 
     @Test
     fun `deserialize with no version`() {
-        val testId: UUID? = UUID.fromString("34893a18-0053-4042-ad00-efe101fdaa09")
+        val testId: UUID = UUID.randomUUID()
         val deserializer = RoninEventDeserializer<Stuff>()
         deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to typeValue), false)
         assertThatThrownBy {

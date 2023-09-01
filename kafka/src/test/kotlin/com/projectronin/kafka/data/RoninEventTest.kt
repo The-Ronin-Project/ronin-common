@@ -4,9 +4,12 @@ import com.projectronin.common.ResourceType
 import com.projectronin.common.Services
 import com.projectronin.kafka.data.RoninEvent.Companion.DEFAULT_CONTENT_TYPE
 import com.projectronin.kafka.data.RoninEvent.Companion.DEFAULT_VERSION
+import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.util.*
@@ -31,5 +34,11 @@ class RoninEventTest {
         assertThat(Instant.now().isAfter(event.time)).isTrue()
         assertThat(event.version).isEqualTo(DEFAULT_VERSION)
         assertThat(event.dataContentType).isEqualTo(DEFAULT_CONTENT_TYPE)
+    }
+
+    @AfterEach
+    fun `Remove UUID mockks`() {
+        clearAllMocks()
+        unmockkStatic(UUID::class)
     }
 }

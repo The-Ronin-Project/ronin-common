@@ -4,6 +4,7 @@ import com.projectronin.common.Resource
 import com.projectronin.common.ResourceType
 import com.projectronin.common.Services
 import com.projectronin.kafka.data.RoninEvent
+import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
@@ -12,24 +13,16 @@ import org.apache.kafka.common.header.internals.RecordHeaders
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.util.UUID
+import java.util.*
 
 class RoninEventSerializerTest {
     private data class Foo(val bar: String)
     private val serializer = RoninEventSerializer<Foo>()
 
-    private val testId: UUID? = UUID.fromString("350e8400-e29b-41d4-a716-000000000000")
-
-    @BeforeEach
-    fun `Setup UUID mocks`() {
-        mockkStatic(UUID::class)
-        every { UUID.randomUUID() }.returns(testId)
-    }
-
     @AfterEach
     fun `Remove UUID mockks`() {
+        clearAllMocks()
         unmockkStatic(UUID::class)
     }
 
@@ -46,6 +39,10 @@ class RoninEventSerializerTest {
 
     @Test
     fun `Test serialize default values`() {
+        val testId = UUID.randomUUID()
+        mockkStatic(UUID::class)
+        every { UUID.randomUUID() } returns testId
+
         val event = RoninEvent(
             source = Services.ASSETS,
             dataContentType = "application/json",
