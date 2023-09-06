@@ -2,7 +2,6 @@ package com.projectronin.kafka.serde
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.projectronin.common.Resource
-import com.projectronin.kafka.config.MapperFactory
 import com.projectronin.kafka.data.RoninEvent
 import com.projectronin.kafka.data.RoninEvent.Companion.DEFAULT_CONTENT_TYPE
 import com.projectronin.kafka.data.RoninEventHeaders
@@ -18,7 +17,7 @@ import kotlin.reflect.KClass
 
 class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
     private lateinit var typeMap: Map<String, KClass<*>>
-    private val mapper: ObjectMapper = MapperFactory.mapper
+    private val mapper: ObjectMapper = com.projectronin.kafka.config.MapperFactory.mapper
 
     companion object {
         const val RONIN_DESERIALIZATION_TYPES_CONFIG = "ronin.json.deserializer.types"
@@ -125,8 +124,12 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
     }
 
     private fun deserializeData(topic: String, type: String, bytes: ByteArray?): T? {
-        val valueClass = typeMap[type]
-            ?: throw UnknownEventType(null, type, topic)
+        val filtered = typeMap.filter { entry -> type.startsWith(entry.key) }
+        val valueClass: KClass<*> = when {
+            filtered.containsKey(type) -> filtered.getValue(type)
+            filtered.isNotEmpty() -> filtered.entries.first().value
+            else -> throw UnknownEventType(null, type, topic)
+        }
 
         @Suppress("UNCHECKED_CAST")
         val data: T? = bytes?.let { mapper.readValue(bytes, valueClass.java) as T }

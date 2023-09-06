@@ -5,9 +5,11 @@ import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serde
 import org.apache.kafka.common.serialization.Serializer
 
-class RoninEventSerde<T> : Serde<RoninEvent<T>> {
-    private val serializer = RoninEventSerializer<T>()
-    private val deserializer = RoninEventDeserializer<T>()
+class RoninEventSerde<T> internal constructor(
+    private val serializer: Serializer<RoninEvent<T>>,
+    private val deserializer: Deserializer<RoninEvent<T>>
+) : Serde<RoninEvent<T>> {
+    constructor() : this(RoninEventSerializer<T>(), RoninEventDeserializer<T>())
 
     override fun serializer(): Serializer<RoninEvent<T>> {
         return serializer

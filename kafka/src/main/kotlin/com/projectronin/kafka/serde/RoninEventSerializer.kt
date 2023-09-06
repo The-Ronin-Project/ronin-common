@@ -1,7 +1,6 @@
 package com.projectronin.kafka.serde
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.projectronin.kafka.config.MapperFactory
 import com.projectronin.kafka.data.RoninEvent
 import com.projectronin.kafka.data.StringHeader
 import org.apache.kafka.common.errors.SerializationException
@@ -11,7 +10,7 @@ import java.time.format.DateTimeFormatter
 import com.projectronin.kafka.data.RoninEventHeaders as Header
 
 class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
-    private val mapper: ObjectMapper = MapperFactory.mapper
+    private val mapper: ObjectMapper = com.projectronin.kafka.config.MapperFactory.mapper
     private val instantFormatter = DateTimeFormatter.ISO_INSTANT
 
     override fun serialize(topic: String, message: RoninEvent<T>?): ByteArray {
