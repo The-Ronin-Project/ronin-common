@@ -7,6 +7,7 @@ import com.projectronin.kafka.exceptions.ConfigurationException
 import com.projectronin.kafka.exceptions.EventHeaderMissing
 import com.projectronin.kafka.exceptions.UnknownEventType
 import com.projectronin.kafka.serde.RoninEventDeserializer.Companion.RONIN_DESERIALIZATION_TYPES_CONFIG
+import org.apache.kafka.common.header.Header
 import org.apache.kafka.common.header.internals.RecordHeaders
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -20,6 +21,15 @@ class RoninEventDeserializerTest {
 
     private val fixedInstant: Instant = Instant.ofEpochSecond(1660000000)
     private val typeValue = "stuff.create:com.projectronin.kafka.serde.RoninEventDeserializerTest\$Stuff"
+    private val nullHeader = object : Header {
+        override fun key(): String {
+            return "NULL_HEADER"
+        }
+
+        override fun value(): ByteArray? {
+            return null
+        }
+    }
 
     @Test
     fun `deserialize no headers error`() {
@@ -44,7 +54,9 @@ class RoninEventDeserializerTest {
                 StringHeader(RoninEventHeaders.CONTENT_TYPE, "content"),
                 StringHeader(RoninEventHeaders.DATA_SCHEMA, "schema"),
                 StringHeader(RoninEventHeaders.TIME, "2022-08-08T23:06:40Z"),
-                StringHeader(RoninEventHeaders.SUBJECT, "stuff/3")
+                StringHeader(RoninEventHeaders.SUBJECT, "stuff/3"),
+                StringHeader(RoninEventHeaders.TENANT_ID, "apposnd"),
+                StringHeader(RoninEventHeaders.PATIENT_ID, "somePatientId")
             )
         )
         val event = deserializer.deserialize("topic", headers, "{\"id\":\"3\"}".encodeToByteArray())
@@ -53,6 +65,38 @@ class RoninEventDeserializerTest {
         assertThat(event.id).isEqualTo(testId)
         assertThat(event.source).isEqualTo("test")
         assertThat(event.version).isEqualTo("2")
+        assertThat(event.type).isEqualTo("stuff.create")
+        assertThat(event.dataContentType).isEqualTo("content")
+        assertThat(event.dataSchema).isEqualTo("schema")
+        assertThat(event.time).isEqualTo(fixedInstant)
+        assertThat(event.data).isEqualTo(Stuff("3"))
+        assertThat(event.tenantId).isEqualTo("apposnd")
+        assertThat(event.patientId).isEqualTo("somePatientId")
+    }
+
+    @Test
+    fun `deserialize v1`() {
+        val testId: UUID = UUID.randomUUID()
+        val deserializer = RoninEventDeserializer<Stuff>()
+        deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to typeValue), false)
+        val headers = RecordHeaders(
+            mutableListOf(
+                StringHeader(RoninEventHeaders.ID, testId.toString()),
+                StringHeader(RoninEventHeaders.SOURCE, "test"),
+                StringHeader(RoninEventHeaders.VERSION, "1.0"),
+                StringHeader(RoninEventHeaders.TYPE, "stuff.create"),
+                StringHeader(RoninEventHeaders.CONTENT_TYPE, "content"),
+                StringHeader(RoninEventHeaders.DATA_SCHEMA, "schema"),
+                StringHeader(RoninEventHeaders.TIME, "2022-08-08T23:06:40Z"),
+                StringHeader(RoninEventHeaders.SUBJECT, "stuff/3")
+            )
+        )
+        val event = deserializer.deserialize("topic", headers, "{\"id\":\"3\"}".encodeToByteArray())
+
+        assertThat(event).isNotNull
+        assertThat(event.id).isEqualTo(testId)
+        assertThat(event.source).isEqualTo("test")
+        assertThat(event.version).isEqualTo("1.0")
         assertThat(event.type).isEqualTo("stuff.create")
         assertThat(event.dataContentType).isEqualTo("content")
         assertThat(event.dataSchema).isEqualTo("schema")
@@ -234,7 +278,9 @@ class RoninEventDeserializerTest {
                 StringHeader(RoninEventHeaders.CONTENT_TYPE, "content"),
                 StringHeader(RoninEventHeaders.DATA_SCHEMA, "schema"),
                 StringHeader(RoninEventHeaders.TIME, "2022-08-08T23:06:40Z"),
-                StringHeader(RoninEventHeaders.SUBJECT, "stuff/3")
+                StringHeader(RoninEventHeaders.SUBJECT, "stuff/3"),
+                StringHeader("EMPTY_HEADER", ""),
+                nullHeader
             )
         )
         val event = deserializer.deserialize("topic", headers, "{\"id\":\"3\"}".encodeToByteArray())

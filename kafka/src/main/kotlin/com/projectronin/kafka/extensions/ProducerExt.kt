@@ -14,3 +14,5 @@ suspend fun <K, V> Producer<K, V>.asyncSend(record: ProducerRecord<K, V>) =
                 ?: continuation.resume(metadata)
         }
     }
+
+fun <K, V> Producer<K, V>.flush() = {}
