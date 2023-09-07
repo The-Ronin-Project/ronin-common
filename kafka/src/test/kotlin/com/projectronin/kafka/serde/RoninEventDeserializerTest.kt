@@ -256,7 +256,6 @@ class RoninEventDeserializerTest {
         }.isInstanceOf(ConfigurationException::class.java)
     }
 
-
     @Test
     fun `configure with bad type format`() {
         val deserializer = RoninEventDeserializer<Stuff>()
