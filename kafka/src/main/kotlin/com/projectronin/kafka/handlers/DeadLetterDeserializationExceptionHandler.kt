@@ -23,21 +23,21 @@ class DeadLetterDeserializationExceptionHandler : DeserializationExceptionHandle
             dlq = configs[DEAD_LETTER_TOPIC_CONFIG] as String?
                 ?: throw ConfigurationException("Missing required configuration. $DEAD_LETTER_TOPIC_CONFIG")
             producer = DeadLetterProducer.producer(configs)
-        }
+        } ?: throw ConfigurationException("Missing required configuration. $DEAD_LETTER_TOPIC_CONFIG")
     }
 
     override fun handle(
         context: ProcessorContext?,
-        record: ConsumerRecord<ByteArray, ByteArray>?,
+        record: ConsumerRecord<ByteArray, ByteArray>,
         exception: Exception?
     ): DeserializationExceptionHandler.DeserializationHandlerResponse {
         producer?.send(
             ProducerRecord(
                 dlq,
                 null,
-                record?.key(),
-                record?.value(),
-                record?.headers()
+                record.key(),
+                record.value(),
+                record.headers()
             )
         ) { recordMetadata: RecordMetadata?, ex: java.lang.Exception? ->
             recordMetadata?.let {
@@ -52,7 +52,7 @@ class DeadLetterDeserializationExceptionHandler : DeserializationExceptionHandle
                         "Attempts to write message to DLQ $dlq failed with exception ${ex.message}"
                 )
             }
-        }
+        } ?: logger.warn("Cannot write to DLQ as the DLQ Producer was not created.")
         return DeserializationExceptionHandler.DeserializationHandlerResponse.CONTINUE
     }
 }
