@@ -1,5 +1,6 @@
 [versions]
 assertj = "3.23.1"
+coroutines = "1.6.4"
 jackson = "2.15.2"
 kafka = "3.2.1"
 kotlinlogging = "3.0.5"
@@ -14,10 +15,12 @@ kafka = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
 kafka-streams = { module = "org.apache.kafka:kafka-streams", version.ref = "kafka" }
 kafka-streams-test-utils = { module = "org.apache.kafka:kafka-streams-test-utils", version.ref = "kafka" }
 
-kotlinlogging = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "kotlinlogging" }
+kotlin-logging = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "kotlinlogging" }
+kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 
 # Test Libraries
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 [bundles]

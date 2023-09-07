@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.kotlinlogging)
+    implementation(libs.kotlin.logging)
 }
