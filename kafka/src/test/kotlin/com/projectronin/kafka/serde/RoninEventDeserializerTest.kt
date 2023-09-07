@@ -249,10 +249,19 @@ class RoninEventDeserializerTest {
     }
 
     @Test
-    fun `deserialize with no type map config`() {
+    fun `configure with no type map config`() {
         val deserializer = RoninEventDeserializer<Stuff>()
         assertThatThrownBy {
             deserializer.configure(mutableMapOf<String, Any?>(), false)
+        }.isInstanceOf(ConfigurationException::class.java)
+    }
+
+
+    @Test
+    fun `configure with bad type format`() {
+        val deserializer = RoninEventDeserializer<Stuff>()
+        assertThatThrownBy {
+            deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to "invalid"), false)
         }.isInstanceOf(ConfigurationException::class.java)
     }
 

@@ -28,7 +28,7 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
 
         val types = configs[RONIN_DESERIALIZATION_TYPES_CONFIG] as String?
         typeMap = makeTypeMap(types) ?: throw ConfigurationException(
-            "No type was configured for the deserialization types, or it was malformed."
+            "Config $RONIN_DESERIALIZATION_TYPES_CONFIG was not configured for the deserialization types."
         )
     }
 
@@ -50,7 +50,7 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
                 when (roninHeaders[RoninEventHeaders.VERSION]) {
                     "1.0", "2" -> {
                         // RoninEvent version found 2, which supports v1.0 as well
-                        fromRoninEventV2(topic, roninHeaders, bytes)
+                        fromV2(topic, roninHeaders, bytes)
                     }
 
                     null -> {
@@ -60,22 +60,18 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
 
                     else -> {
                         // Attempt to support newer versions hoping they were compatible
-                        fromRoninEventLatest(topic, roninHeaders, bytes)
+                        fromLatest(topic, roninHeaders, bytes)
                     }
                 }
             }
         }
     }
 
-    private fun fromRoninEventLatest(
-        topic: String,
-        roninHeaders: Map<String, String>,
-        bytes: ByteArray?
-    ): RoninEvent<T> {
-        return fromRoninEventV2(topic, roninHeaders, bytes)
+    private fun fromLatest(topic: String, roninHeaders: Map<String, String>, bytes: ByteArray?): RoninEvent<T> {
+        return fromV2(topic, roninHeaders, bytes)
     }
 
-    private fun fromRoninEventV2(topic: String, roninHeaders: Map<String, String>, bytes: ByteArray?): RoninEvent<T> {
+    private fun fromV2(topic: String, roninHeaders: Map<String, String>, bytes: ByteArray?): RoninEvent<T> {
         roninHeaders.validate(topic, RoninEventHeaders.required)
 
         val id = roninHeaders.getValue(RoninEventHeaders.ID)
@@ -137,19 +133,25 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
     }
 
     private fun makeTypeMap(config: String?): Map<String, KClass<out Any>>? =
-        config?.split(",")?.associate {
-            val (left, right) = it.split(":")
-            left.trim() to Class.forName(right.trim()).kotlin
-        }
-
-    private fun Map<String, String>.validate(topic: String, required: List<String>): Map<String, String> {
-        this.keys
-            .let {
-                val missing = required - it
-                if (missing.isNotEmpty()) {
-                    throw EventHeaderMissing(missing, topic)
-                }
+        try {
+            config?.split(",")?.associate {
+                val (left, right) = it.split(":", ignoreCase = true, limit = 2)
+                left.trim() to Class.forName(right.trim()).kotlin
             }
-        return this
-    }
+        } catch (_: IndexOutOfBoundsException) {
+            throw ConfigurationException(
+                "$RONIN_DESERIALIZATION_TYPES_CONFIG was improperly formatted and could not be parsed."
+            )
+        }
+}
+
+private fun Map<String, String>.validate(topic: String, required: List<String>): Map<String, String> {
+    this.keys
+        .let {
+            val missing = required - it
+            if (missing.isNotEmpty()) {
+                throw EventHeaderMissing(missing, topic)
+            }
+        }
+    return this
 }
