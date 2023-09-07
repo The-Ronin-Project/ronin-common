@@ -10,6 +10,8 @@ dependencies {
     api(libs.kafka)
     api(libs.kafka.streams)
     implementation(libs.kotlin.logging)
+    implementation(libs.spring.core)
+    implementation(libs.spring.context)
 
     testImplementation(libs.assertj)
     testImplementation(libs.kotlinx.coroutines)
