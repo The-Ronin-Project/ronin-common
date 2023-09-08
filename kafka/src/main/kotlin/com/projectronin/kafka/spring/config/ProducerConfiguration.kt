@@ -15,7 +15,7 @@ open class ProducerConfiguration {
         return ProducerProperties(clusterProperties)
     }
 
-    @Bean(name = ["defaultProducerProperties"], destroyMethod = "flush")
+    @Bean(name = ["defaultProducer"], destroyMethod = "flush")
     open fun <T> kafkaProducer(producerProperties: ProducerProperties): Producer<String, RoninEvent<T>> {
         return KafkaProducer(producerProperties)
     }
