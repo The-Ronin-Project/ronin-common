@@ -2,7 +2,6 @@ package com.projectronin.kafka.spring.config
 
 import com.projectronin.kafka.config.ClusterProperties
 import com.projectronin.kafka.config.ProducerProperties
-import com.projectronin.kafka.data.RoninEvent
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.Producer
 import org.springframework.context.annotation.Bean
@@ -16,7 +15,7 @@ open class ProducerConfiguration {
     }
 
     @Bean(name = ["defaultProducer"], destroyMethod = "flush")
-    open fun <T> kafkaProducer(producerProperties: ProducerProperties): Producer<String, RoninEvent<T>> {
+    open fun <T> kafkaProducer(producerProperties: ProducerProperties): Producer<String, T> {
         return KafkaProducer(producerProperties)
     }
 }

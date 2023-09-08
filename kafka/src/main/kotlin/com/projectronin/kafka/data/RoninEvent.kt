@@ -15,7 +15,7 @@ data class RoninEvent<T>(
     val dataContentType: String = DEFAULT_CONTENT_TYPE,
     val data: T? = null,
     val type: String,
-    val resource: ResourceId? = null
+    val resourceId: ResourceId? = null
 ) {
     companion object {
         internal const val DEFAULT_VERSION = "2"

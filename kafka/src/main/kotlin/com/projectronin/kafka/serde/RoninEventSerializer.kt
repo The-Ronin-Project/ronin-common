@@ -45,8 +45,8 @@ class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
         message.patientId?.let {
             headers.add(StringHeader(Header.PATIENT_ID, message.patientId))
         }
-        message.resource?.let {
-            headers.add(StringHeader(Header.SUBJECT, message.resource.toString()))
+        message.resourceId?.let {
+            headers.add(StringHeader(Header.SUBJECT, message.resourceId.toString()))
         }
     }
 

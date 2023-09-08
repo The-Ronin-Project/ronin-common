@@ -49,7 +49,7 @@ class RoninEventSerializerTest {
             data = Foo("carl was here"),
             tenantId = "apposnd",
             patientId = "patient123",
-            resource = ResourceId("resourceType", "resourceId")
+            resourceId = ResourceId("resourceType", "resourceId")
         )
 
         val headers = RecordHeaders()
@@ -78,7 +78,7 @@ class RoninEventSerializerTest {
             data = Foo("carl was here"),
             tenantId = "apposnd",
             patientId = "patient123",
-            resource = ResourceId("resourceType", "resourceId")
+            resourceId = ResourceId("resourceType", "resourceId")
         )
 
         val headers = RecordHeaders()
