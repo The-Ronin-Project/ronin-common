@@ -1,7 +1,7 @@
 package com.projectronin.kafka.serde
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.projectronin.common.Resource
+import com.projectronin.common.ResourceId
 import com.projectronin.kafka.data.RoninEvent
 import com.projectronin.kafka.data.RoninEvent.Companion.DEFAULT_CONTENT_TYPE
 import com.projectronin.kafka.data.RoninEventHeaders
@@ -87,7 +87,7 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
             type = type,
             source = roninHeaders.getValue(RoninEventHeaders.SOURCE),
             dataContentType = roninHeaders.getValue(RoninEventHeaders.CONTENT_TYPE),
-            resource = Resource.parse(roninHeaders.getValue(RoninEventHeaders.SUBJECT)),
+            resource = ResourceId.parse(roninHeaders.getValue(RoninEventHeaders.SUBJECT)),
             tenantId = roninHeaders[RoninEventHeaders.TENANT_ID],
             patientId = roninHeaders[RoninEventHeaders.PATIENT_ID],
             data = data

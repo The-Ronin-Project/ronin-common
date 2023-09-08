@@ -1,8 +1,6 @@
 package com.projectronin.kafka.serde
 
-import com.projectronin.common.Resource
-import com.projectronin.common.ResourceType
-import com.projectronin.common.Services
+import com.projectronin.common.ResourceId
 import com.projectronin.kafka.data.RoninEvent
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -44,14 +42,14 @@ class RoninEventSerializerTest {
         every { UUID.randomUUID() } returns testId
 
         val event = RoninEvent(
-            source = Services.ASSETS,
+            source = "prodeng-assets",
             dataContentType = "application/json",
             dataSchema = "http://schemas/asset",
-            type = "${ResourceType.RONIN_DOCUMENT_REFERENCE}.create",
+            type = "ronin.ehr.document-reference.create",
             data = Foo("carl was here"),
             tenantId = "apposnd",
             patientId = "patient123",
-            resource = Resource("resourceType", "resourceId")
+            resource = ResourceId("resourceType", "resourceId")
         )
 
         val headers = RecordHeaders()
@@ -60,9 +58,9 @@ class RoninEventSerializerTest {
         assertThat(bytes?.decodeToString()).isEqualTo("{\"bar\":\"carl was here\"}")
 
         assertThat(headers.get("ce_id")).isEqualTo(testId.toString())
-        assertThat(headers.get("ce_source")).isEqualTo(Services.ASSETS)
+        assertThat(headers.get("ce_source")).isEqualTo("prodeng-assets")
         assertThat(headers.get("ce_specversion")).isEqualTo("2")
-        assertThat(headers.get("ce_type")).isEqualTo("${ResourceType.RONIN_DOCUMENT_REFERENCE}.create")
+        assertThat(headers.get("ce_type")).isEqualTo("ronin.ehr.document-reference.create")
         assertThat(headers.get("content-type")).isEqualTo("application/json")
         assertThat(headers.get("ce_dataschema")).isEqualTo("http://schemas/asset")
         assertThat(headers.get("ronin_tenant_id")).isEqualTo("apposnd")
@@ -73,14 +71,14 @@ class RoninEventSerializerTest {
     @Test
     fun `Test serialize backwards to RoninWrapper`() {
         val event = RoninEvent(
-            source = Services.ASSETS,
+            source = "prodeng-assets",
             dataContentType = "application/json",
             dataSchema = "http://schemas/asset",
-            type = "${ResourceType.RONIN_DOCUMENT_REFERENCE}.create",
+            type = "ronin.ehr.document-reference.create",
             data = Foo("carl was here"),
             tenantId = "apposnd",
             patientId = "patient123",
-            resource = Resource("resourceType", "resourceId")
+            resource = ResourceId("resourceType", "resourceId")
         )
 
         val headers = RecordHeaders()
@@ -89,18 +87,18 @@ class RoninEventSerializerTest {
         assertThat(bytes?.decodeToString()).isEqualTo("{\"bar\":\"carl was here\"}")
 
         assertThat(headers.get("ronin_wrapper_version")).isEqualTo("2")
-        assertThat(headers.get("ronin_source_service")).isEqualTo(Services.ASSETS)
-        assertThat(headers.get("ronin_data_type")).isEqualTo("${ResourceType.RONIN_DOCUMENT_REFERENCE}.create")
+        assertThat(headers.get("ronin_source_service")).isEqualTo("prodeng-assets")
+        assertThat(headers.get("ronin_data_type")).isEqualTo("ronin.ehr.document-reference.create")
         assertThat(headers.get("ronin_tenant_id")).isEqualTo("apposnd")
     }
 
     @Test
     fun `Test serialize backwards to RoninWrapper no Tenant`() {
         val event = RoninEvent(
-            source = Services.ASSETS,
+            source = "prodeng-assets",
             dataContentType = "application/json",
             dataSchema = "http://schemas/asset",
-            type = "${ResourceType.RONIN_DOCUMENT_REFERENCE}.create",
+            type = "ronin.ehr.document-reference.create",
             data = Foo("carl was here")
         )
 
@@ -110,8 +108,8 @@ class RoninEventSerializerTest {
         assertThat(bytes?.decodeToString()).isEqualTo("{\"bar\":\"carl was here\"}")
 
         assertThat(headers.get("ronin_wrapper_version")).isEqualTo("2")
-        assertThat(headers.get("ronin_source_service")).isEqualTo(Services.ASSETS)
-        assertThat(headers.get("ronin_data_type")).isEqualTo("${ResourceType.RONIN_DOCUMENT_REFERENCE}.create")
+        assertThat(headers.get("ronin_source_service")).isEqualTo("prodeng-assets")
+        assertThat(headers.get("ronin_data_type")).isEqualTo("ronin.ehr.document-reference.create")
         assertThat(headers.get("ronin_tenant_id")).isEqualTo("unknown")
     }
 }

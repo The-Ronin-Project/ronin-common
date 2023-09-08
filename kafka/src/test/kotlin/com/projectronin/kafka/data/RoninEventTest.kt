@@ -1,7 +1,5 @@
 package com.projectronin.kafka.data
 
-import com.projectronin.common.ResourceType
-import com.projectronin.common.Services
 import com.projectronin.kafka.data.RoninEvent.Companion.DEFAULT_CONTENT_TYPE
 import com.projectronin.kafka.data.RoninEvent.Companion.DEFAULT_VERSION
 import io.mockk.clearAllMocks
@@ -24,10 +22,10 @@ class RoninEventTest {
         every { UUID.randomUUID() }.returns(testId)
 
         val event = RoninEvent<Foo>(
-            source = Services.ASSETS,
+            source = "prodeng-assets",
             dataContentType = "application/json",
             dataSchema = "http://schemas/asset",
-            type = "${ResourceType.RONIN_DOCUMENT_REFERENCE}.create"
+            type = "something.create"
         )
 
         assertThat(event.id).isEqualTo(testId)

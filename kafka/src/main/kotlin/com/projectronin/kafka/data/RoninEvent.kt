@@ -1,6 +1,6 @@
 package com.projectronin.kafka.data
 
-import com.projectronin.common.Resource
+import com.projectronin.common.ResourceId
 import java.time.Instant
 import java.util.UUID
 
@@ -15,7 +15,7 @@ data class RoninEvent<T>(
     val dataContentType: String = DEFAULT_CONTENT_TYPE,
     val data: T? = null,
     val type: String,
-    val resource: Resource? = null
+    val resource: ResourceId? = null
 ) {
     companion object {
         internal const val DEFAULT_VERSION = "2"

@@ -1,22 +1,22 @@
 package com.projectronin.common
 
-data class Resource(
-    val resourceType: String,
-    val resourceId: String
+data class ResourceId(
+    val type: String,
+    val id: String
 ) {
     override fun toString(): String {
-        return "${this.resourceType}/${this.resourceId}"
+        return "${this.type}/${this.id}"
     }
 
     companion object {
-        fun parse(value: String?): Resource? {
+        fun parse(value: String?): ResourceId? {
             return when (value) {
                 null -> null
                 else -> {
                     val strings = value.split("/")
                     when (strings.size) {
                         2 -> {
-                            Resource(strings[0], strings[1])
+                            ResourceId(strings[0], strings[1])
                         }
 
                         else -> {
