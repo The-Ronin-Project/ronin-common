@@ -1,8 +1,31 @@
 [versions]
-
+assertj = "3.23.1"
+coroutines = "1.6.4"
+jackson = "2.15.2"
+kafka = "3.2.1"
+kotlinlogging = "3.0.5"
+mockk = "1.13.5"
+spring = "6.0.11"
 
 [libraries]
+jackson = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
+jackson-module-parameterNames= { module = "com.fasterxml.jackson.module:jackson-module-parameter-names", version.ref = "jackson" }
 
+kafka = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
+kafka-streams = { module = "org.apache.kafka:kafka-streams", version.ref = "kafka" }
+kafka-streams-test-utils = { module = "org.apache.kafka:kafka-streams-test-utils", version.ref = "kafka" }
+
+kotlin-logging = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "kotlinlogging" }
+kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+
+spring-core = {module = "org.springframework:spring-core", version.ref = "spring" }
+spring-context = {module = "org.springframework:spring-context", version.ref = "spring" }
+
+# Test Libraries
+assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 [bundles]
 

@@ -1,8 +1,8 @@
 rootProject.name = "ronin-common-root"
 
-// Spring libraries
-
-// Other libraries
+// libraries
+include(":common")
+include(":kafka")
 
 // catalog
 include(":ronin-common-catalog")
