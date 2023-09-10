@@ -47,8 +47,10 @@ class MeteredProducer<K, V>(val producer: Producer<K, V>, private val meterRegis
 
             meterRegistry?.timer(
                 Metrics.SEND_TIMER,
-                "success", success,
-                "topic", topic
+                "success",
+                success,
+                "topic",
+                topic
             )?.record(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS)
             callback?.onCompletion(metadata, exception)
         }

@@ -35,7 +35,6 @@ class MeteredProducerTest {
     )
     private val record = ProducerRecord("test.topic", null, "foo/17", event)
 
-
     @Test
     fun `flush is metered and calls producer flush`() {
         val mockProducer = mockk<Producer<String, RoninEvent<Foo>>>(relaxed = true)
@@ -70,8 +69,10 @@ class MeteredProducerTest {
         verify(exactly = 1) {
             meterRegistry.timer(
                 SEND_TIMER,
-                "success", "true",
-                "topic", "test.topic"
+                "success",
+                "true",
+                "topic",
+                "test.topic"
             )
         }
     }
@@ -93,12 +94,13 @@ class MeteredProducerTest {
         verify(exactly = 1) {
             meterRegistry.timer(
                 SEND_TIMER,
-                "success", "false",
-                "topic", "test.topic"
+                "success",
+                "false",
+                "topic",
+                "test.topic"
             )
         }
     }
-
 
     @Test
     fun `send success with metrics with callback`() {
@@ -119,8 +121,10 @@ class MeteredProducerTest {
         verify(exactly = 1) {
             meterRegistry.timer(
                 SEND_TIMER,
-                "success", "true",
-                "topic", "test.topic"
+                "success",
+                "true",
+                "topic",
+                "test.topic"
             )
         }
     }
@@ -145,12 +149,13 @@ class MeteredProducerTest {
         verify(exactly = 1) {
             meterRegistry.timer(
                 SEND_TIMER,
-                "success", "false",
-                "topic", "test.topic"
+                "success",
+                "false",
+                "topic",
+                "test.topic"
             )
         }
     }
-
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
@@ -170,8 +175,10 @@ class MeteredProducerTest {
         verify(exactly = 1) {
             meterRegistry.timer(
                 SEND_TIMER,
-                "success", "true",
-                "topic", "test.topic"
+                "success",
+                "true",
+                "topic",
+                "test.topic"
             )
         }
     }
@@ -198,11 +205,12 @@ class MeteredProducerTest {
             verify(exactly = 1) {
                 meterRegistry.timer(
                     SEND_TIMER,
-                    "success", "false",
-                    "topic", "test.topic"
+                    "success",
+                    "false",
+                    "topic",
+                    "test.topic"
                 )
             }
-
         }
     }
 }

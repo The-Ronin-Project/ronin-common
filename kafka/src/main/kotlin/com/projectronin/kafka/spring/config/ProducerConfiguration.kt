@@ -24,6 +24,4 @@ open class ProducerConfiguration {
     ): Producer<String, T> {
         return MeteredProducer(KafkaProducer(producerProperties), meterRegistry.orElse(null))
     }
-
 }
-
