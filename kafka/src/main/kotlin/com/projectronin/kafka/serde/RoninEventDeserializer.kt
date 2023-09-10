@@ -8,7 +8,6 @@ import com.projectronin.kafka.data.RoninEventHeaders
 import com.projectronin.kafka.exceptions.ConfigurationException
 import com.projectronin.kafka.exceptions.EventHeaderMissing
 import com.projectronin.kafka.exceptions.UnknownEventType
-import jdk.jshell.spi.ExecutionControl.NotImplementedException
 import org.apache.kafka.common.header.Headers
 import org.apache.kafka.common.serialization.Deserializer
 import java.time.Instant
@@ -33,7 +32,7 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
     }
 
     override fun deserialize(topic: String, bytes: ByteArray?): RoninEvent<T> {
-        throw NotImplementedException("Deserialize method without headers is not supported by this deserializer")
+        throw UnsupportedOperationException("Deserialize method without headers is not supported by this deserializer")
     }
 
     override fun deserialize(topic: String, headers: Headers, bytes: ByteArray?): RoninEvent<T> {

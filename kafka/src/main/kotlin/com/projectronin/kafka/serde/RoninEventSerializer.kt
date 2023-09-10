@@ -61,4 +61,4 @@ class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
     }
 }
 
-fun Headers.get(key: String) = lastHeader(key).value().decodeToString()
+fun Headers.get(key: String) = lastHeader(key)?.value()?.decodeToString()
