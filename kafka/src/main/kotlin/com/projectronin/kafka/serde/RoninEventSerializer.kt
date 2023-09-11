@@ -15,7 +15,7 @@ class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
     private val legacyOptions: MutableSet<String> = mutableSetOf()
 
     companion object {
-        const val RONIN_SERIALIZE_LEGACY_CONFIG = "ronin.serializer.wrapper"
+        const val RONIN_SERIALIZE_LEGACY_CONFIG = "ronin.serializer.legacy"
         const val LEGACY_WRAPPER_OPTION = "WRAPPER"
     }
 
