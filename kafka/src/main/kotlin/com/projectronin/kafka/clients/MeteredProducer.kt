@@ -61,8 +61,10 @@ class MeteredProducer<K, V>(val producer: Producer<K, V>, private val meterRegis
         producer.flush()
         meterRegistry?.timer(Metrics.FLUSH_TIMER)?.record(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS)
     }
+}
 
-    suspend fun asyncSend(record: ProducerRecord<K, V>) = suspendCoroutine<RecordMetadata> { continuation ->
+suspend fun <K, V> Producer<K, V>.asyncSend(record: ProducerRecord<K, V>): RecordMetadata {
+    return suspendCoroutine { continuation ->
         send(record) { metadata, exception ->
             exception?.let(continuation::resumeWithException) ?: continuation.resume(metadata)
         }

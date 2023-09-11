@@ -86,7 +86,7 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
             type = type,
             source = roninHeaders.getValue(RoninEventHeaders.SOURCE),
             dataContentType = roninHeaders.getValue(RoninEventHeaders.CONTENT_TYPE),
-            resourceId = ResourceId.parse(roninHeaders.getValue(RoninEventHeaders.SUBJECT)),
+            resourceId = ResourceId.parse(roninHeaders[RoninEventHeaders.SUBJECT]),
             tenantId = roninHeaders[RoninEventHeaders.TENANT_ID],
             patientId = roninHeaders[RoninEventHeaders.PATIENT_ID],
             data = data

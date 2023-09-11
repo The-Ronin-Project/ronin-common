@@ -54,7 +54,7 @@ class RoninEventDeserializerTest {
                 StringHeader(RoninEventHeaders.CONTENT_TYPE, "content"),
                 StringHeader(RoninEventHeaders.DATA_SCHEMA, "schema"),
                 StringHeader(RoninEventHeaders.TIME, "2022-08-08T23:06:40Z"),
-                StringHeader(RoninEventHeaders.SUBJECT, "stuff/3"),
+//                StringHeader(RoninEventHeaders.SUBJECT, "stuff/3"),
                 StringHeader(RoninEventHeaders.TENANT_ID, "apposnd"),
                 StringHeader(RoninEventHeaders.PATIENT_ID, "somePatientId")
             )
@@ -102,6 +102,38 @@ class RoninEventDeserializerTest {
         assertThat(event.dataSchema).isEqualTo("schema")
         assertThat(event.time).isEqualTo(fixedInstant)
         assertThat(event.data).isEqualTo(Stuff("3"))
+    }
+
+    @Test
+    fun `deserialize minimum`() {
+        val testId: UUID = UUID.randomUUID()
+        val deserializer = RoninEventDeserializer<Stuff>()
+        deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to typeValue), false)
+        val headers = RecordHeaders(
+            mutableListOf(
+                StringHeader(RoninEventHeaders.ID, testId.toString()),
+                StringHeader(RoninEventHeaders.SOURCE, "test"),
+                StringHeader(RoninEventHeaders.VERSION, "1.0"),
+                StringHeader(RoninEventHeaders.TYPE, "stuff.create"),
+                StringHeader(RoninEventHeaders.CONTENT_TYPE, "content"),
+                StringHeader(RoninEventHeaders.DATA_SCHEMA, "schema"),
+                StringHeader(RoninEventHeaders.TIME, "2022-08-08T23:06:40Z")
+            )
+        )
+        val event = deserializer.deserialize("topic", headers, null)
+
+        assertThat(event).isNotNull
+        assertThat(event.id).isEqualTo(testId)
+        assertThat(event.source).isEqualTo("test")
+        assertThat(event.version).isEqualTo("1.0")
+        assertThat(event.type).isEqualTo("stuff.create")
+        assertThat(event.dataContentType).isEqualTo("content")
+        assertThat(event.dataSchema).isEqualTo("schema")
+        assertThat(event.time).isEqualTo(fixedInstant)
+        assertThat(event.data).isNull()
+        assertThat(event.resourceId).isNull()
+        assertThat(event.tenantId).isNull()
+        assertThat(event.patientId).isNull()
     }
 
     @Test
