@@ -16,6 +16,7 @@ import java.util.*
 
 class RoninEventSerializerTest {
     private data class Foo(val bar: String)
+
     private val serializer = RoninEventSerializer<Foo>()
 
     @AfterEach
@@ -82,6 +83,12 @@ class RoninEventSerializerTest {
         )
 
         val headers = RecordHeaders()
+        serializer.configure(
+            mutableMapOf(
+                RoninEventSerializer.RONIN_SERIALIZE_LEGACY_CONFIG to "TEST,WRAPPER,DUMMY"
+            ),
+            false
+        )
         val bytes = serializer.serialize("topic", headers, event)
 
         assertThat(bytes?.decodeToString()).isEqualTo("{\"bar\":\"carl was here\"}")
@@ -103,6 +110,12 @@ class RoninEventSerializerTest {
         )
 
         val headers = RecordHeaders()
+        serializer.configure(
+            mutableMapOf(
+                RoninEventSerializer.RONIN_SERIALIZE_LEGACY_CONFIG to "WRAPPER"
+            ),
+            false
+        )
         val bytes = serializer.serialize("topic", headers, event)
 
         assertThat(bytes?.decodeToString()).isEqualTo("{\"bar\":\"carl was here\"}")
