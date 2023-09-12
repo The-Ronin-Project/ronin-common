@@ -9,7 +9,7 @@ data class ResourceId(
     }
 
     companion object {
-        fun parse(value: String?): ResourceId? {
+        fun parseOrNull(value: String?): ResourceId? {
             return when (value) {
                 null -> null
                 else -> {

@@ -1,6 +1,8 @@
 package com.projectronin.kafka.serde
 
 import com.fasterxml.jackson.core.JsonParseException
+import com.projectronin.common.PatientId
+import com.projectronin.common.TenantId
 import com.projectronin.kafka.data.RoninEventHeaders
 import com.projectronin.kafka.data.StringHeader
 import com.projectronin.kafka.exceptions.ConfigurationException
@@ -54,7 +56,7 @@ class RoninEventDeserializerTest {
                 StringHeader(RoninEventHeaders.CONTENT_TYPE, "content"),
                 StringHeader(RoninEventHeaders.DATA_SCHEMA, "schema"),
                 StringHeader(RoninEventHeaders.TIME, "2022-08-08T23:06:40Z"),
-//                StringHeader(RoninEventHeaders.SUBJECT, "stuff/3"),
+                StringHeader(RoninEventHeaders.SUBJECT, "stuff/3"),
                 StringHeader(RoninEventHeaders.TENANT_ID, "apposnd"),
                 StringHeader(RoninEventHeaders.PATIENT_ID, "somePatientId")
             )
@@ -70,8 +72,8 @@ class RoninEventDeserializerTest {
         assertThat(event.dataSchema).isEqualTo("schema")
         assertThat(event.time).isEqualTo(fixedInstant)
         assertThat(event.data).isEqualTo(Stuff("3"))
-        assertThat(event.tenantId).isEqualTo("apposnd")
-        assertThat(event.patientId).isEqualTo("somePatientId")
+        assertThat(event.tenantId).isEqualTo(TenantId("apposnd"))
+        assertThat(event.patientId).isEqualTo(PatientId("somePatientId"))
     }
 
     @Test

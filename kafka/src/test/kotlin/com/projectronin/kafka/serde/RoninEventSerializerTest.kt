@@ -1,6 +1,8 @@
 package com.projectronin.kafka.serde
 
+import com.projectronin.common.PatientId
 import com.projectronin.common.ResourceId
+import com.projectronin.common.TenantId
 import com.projectronin.kafka.data.RoninEvent
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -48,8 +50,8 @@ class RoninEventSerializerTest {
             dataSchema = "http://schemas/asset",
             type = "ronin.ehr.document-reference.create",
             data = Foo("carl was here"),
-            tenantId = "apposnd",
-            patientId = "patient123",
+            tenantId = TenantId("apposnd"),
+            patientId = PatientId("patient123"),
             resourceId = ResourceId("resourceType", "resourceId")
         )
 
@@ -77,8 +79,8 @@ class RoninEventSerializerTest {
             dataSchema = "http://schemas/asset",
             type = "ronin.ehr.document-reference.create",
             data = Foo("carl was here"),
-            tenantId = "apposnd",
-            patientId = "patient123",
+            tenantId = TenantId("apposnd"),
+            patientId = PatientId("patient123"),
             resourceId = ResourceId("resourceType", "resourceId")
         )
 

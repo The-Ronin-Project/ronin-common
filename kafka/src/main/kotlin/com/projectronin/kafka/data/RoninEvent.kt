@@ -1,6 +1,8 @@
 package com.projectronin.kafka.data
 
+import com.projectronin.common.PatientId
 import com.projectronin.common.ResourceId
+import com.projectronin.common.TenantId
 import java.time.Instant
 import java.util.UUID
 
@@ -9,8 +11,8 @@ data class RoninEvent<T>(
     val time: Instant = Instant.now(),
     val version: String = DEFAULT_VERSION,
     val source: String,
-    val tenantId: String? = null,
-    val patientId: String? = null,
+    val tenantId: TenantId? = null,
+    val patientId: PatientId? = null,
     val dataSchema: String,
     val dataContentType: String = DEFAULT_CONTENT_TYPE,
     val data: T? = null,

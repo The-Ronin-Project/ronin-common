@@ -1,7 +1,9 @@
 package com.projectronin.kafka.serde
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.projectronin.common.PatientId
 import com.projectronin.common.ResourceId
+import com.projectronin.common.TenantId
 import com.projectronin.kafka.data.RoninEvent
 import com.projectronin.kafka.data.RoninEvent.Companion.DEFAULT_CONTENT_TYPE
 import com.projectronin.kafka.data.RoninEventHeaders
@@ -86,9 +88,9 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
             type = type,
             source = roninHeaders.getValue(RoninEventHeaders.SOURCE),
             dataContentType = roninHeaders.getValue(RoninEventHeaders.CONTENT_TYPE),
-            resourceId = ResourceId.parse(roninHeaders[RoninEventHeaders.SUBJECT]),
-            tenantId = roninHeaders[RoninEventHeaders.TENANT_ID],
-            patientId = roninHeaders[RoninEventHeaders.PATIENT_ID],
+            resourceId = ResourceId.parseOrNull(roninHeaders[RoninEventHeaders.SUBJECT]),
+            tenantId = roninHeaders[RoninEventHeaders.TENANT_ID]?.let { TenantId(it) },
+            patientId = roninHeaders[RoninEventHeaders.PATIENT_ID]?.let { PatientId(it) },
             data = data
         )
     }
@@ -113,7 +115,7 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
             dataSchema = "unknown",
             type = roninHeaders.getValue(dataType),
             version = roninHeaders.getValue(wrapperVersion),
-            tenantId = roninHeaders.getValue(tenantId),
+            tenantId = TenantId(roninHeaders.getValue(tenantId)),
             data = data
         )
     }

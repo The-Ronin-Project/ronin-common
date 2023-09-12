@@ -3,7 +3,7 @@ package com.projectronin.kafka.handlers
 import com.projectronin.kafka.exceptions.ConfigurationException
 import mu.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.clients.producer.RecordMetadata
 import org.apache.kafka.streams.errors.DeserializationExceptionHandler
@@ -12,7 +12,7 @@ import org.apache.kafka.streams.processor.ProcessorContext
 class DeadLetterDeserializationExceptionHandler : DeserializationExceptionHandler {
     private val logger = KotlinLogging.logger {}
     private var dlq: String? = null
-    private var producer: KafkaProducer<ByteArray, ByteArray>? = null
+    private var producer: Producer<ByteArray, ByteArray>? = null
 
     companion object {
         const val DEAD_LETTER_TOPIC_CONFIG = "ronin.dead.letter.topic"

@@ -56,10 +56,10 @@ class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
         }
 
         message.tenantId?.let {
-            headers.add(StringHeader(Header.TENANT_ID, message.tenantId))
+            headers.add(StringHeader(Header.TENANT_ID, message.tenantId.value))
         }
         message.patientId?.let {
-            headers.add(StringHeader(Header.PATIENT_ID, message.patientId))
+            headers.add(StringHeader(Header.PATIENT_ID, message.patientId.value))
         }
         message.resourceId?.let {
             headers.add(StringHeader(Header.SUBJECT, message.resourceId.toString()))
@@ -71,7 +71,7 @@ class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
         headers.apply {
             add(StringHeader("ronin_wrapper_version", message.version))
             add(StringHeader("ronin_source_service", message.source))
-            add(StringHeader("ronin_tenant_id", message.tenantId ?: "unknown"))
+            add(StringHeader("ronin_tenant_id", message.tenantId?.value ?: "unknown"))
             add(StringHeader("ronin_data_type", message.type))
         }
     }
