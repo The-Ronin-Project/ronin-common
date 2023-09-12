@@ -50,8 +50,8 @@ class MeteredProducer<K, V>(val producer: Producer<K, V>, private val meterRegis
                     }
                 }
 
-            meterRegistry?.also {
-                it.timer(
+            meterRegistry?.apply {
+                timer(
                     Metrics.SEND_TIMER,
                     "success",
                     success,
