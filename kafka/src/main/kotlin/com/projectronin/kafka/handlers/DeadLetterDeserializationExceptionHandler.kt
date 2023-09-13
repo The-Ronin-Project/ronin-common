@@ -43,15 +43,15 @@ class DeadLetterDeserializationExceptionHandler : DeserializationExceptionHandle
             recordMetadata?.let {
                 logger.warn(
                     "Exception Deserializing Message from" +
-                            " ${record.topic()}-${record.partition()}@${record.offset()}. " +
-                            "Message forwarded to DLQ $dlq at $recordMetadata"
+                        " ${record.topic()}-${record.partition()}@${record.offset()}. " +
+                        "Message forwarded to DLQ $dlq at $recordMetadata"
                 )
             }
             ex?.let {
                 logger.warn(
                     "Exception Deserializing Message from" +
-                            " ${record.topic()}-${record.partition()}@${record.offset()}. " +
-                            "Attempts to write message to DLQ $dlq failed with exception ${ex.message}"
+                        " ${record.topic()}-${record.partition()}@${record.offset()}. " +
+                        "Attempts to write message to DLQ $dlq failed with exception ${ex.message}"
                 )
             }
         } ?: logger.warn("Cannot write to DLQ as the DLQ Producer was not created.")
