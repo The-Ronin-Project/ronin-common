@@ -1,6 +1,6 @@
 package com.projectronin.kafka.config
 
-import com.projectronin.kafka.serde.RoninEventSerializer
+import com.projectronin.kafka.serialization.RoninEventSerializer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.record.CompressionType
 import org.apache.kafka.common.serialization.StringSerializer

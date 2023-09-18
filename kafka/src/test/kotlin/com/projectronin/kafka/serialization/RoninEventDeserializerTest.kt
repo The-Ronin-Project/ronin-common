@@ -1,4 +1,4 @@
-package com.projectronin.kafka.serde
+package com.projectronin.kafka.serialization
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.projectronin.common.PatientId
@@ -8,7 +8,7 @@ import com.projectronin.kafka.data.StringHeader
 import com.projectronin.kafka.exceptions.ConfigurationException
 import com.projectronin.kafka.exceptions.EventHeaderMissing
 import com.projectronin.kafka.exceptions.UnknownEventType
-import com.projectronin.kafka.serde.RoninEventDeserializer.Companion.RONIN_DESERIALIZATION_TYPES_CONFIG
+import com.projectronin.kafka.serialization.RoninEventDeserializer.Companion.RONIN_DESERIALIZATION_TYPES_CONFIG
 import org.apache.kafka.common.header.Header
 import org.apache.kafka.common.header.internals.RecordHeaders
 import org.assertj.core.api.Assertions.assertThat
@@ -22,7 +22,7 @@ class RoninEventDeserializerTest {
     private data class Foo(val bar: String)
 
     private val fixedInstant: Instant = Instant.ofEpochSecond(1660000000)
-    private val typeValue = "stuff.create:com.projectronin.kafka.serde.RoninEventDeserializerTest\$Stuff"
+    private val typeValue = "stuff.create:com.projectronin.kafka.serialization.RoninEventDeserializerTest\$Stuff"
     private val nullHeader = object : Header {
         override fun key(): String {
             return "NULL_HEADER"
@@ -305,9 +305,9 @@ class RoninEventDeserializerTest {
         deserializer.configure(
             mutableMapOf(
                 RONIN_DESERIALIZATION_TYPES_CONFIG to "stuff:" +
-                    "com.projectronin.kafka.serde.RoninEventDeserializerTest\$Stuff," +
+                    "com.projectronin.kafka.serialization.RoninEventDeserializerTest\$Stuff," +
                     "stuff.foo:" +
-                    "com.projectronin.kafka.serde.RoninEventDeserializerTest\$Foo"
+                    "com.projectronin.kafka.serialization.RoninEventDeserializerTest\$Foo"
             ),
             false
         )

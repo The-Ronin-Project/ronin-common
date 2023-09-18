@@ -1,7 +1,7 @@
 package com.projectronin.kafka.config
 
-import com.projectronin.kafka.serde.RoninEventDeserializer
-import com.projectronin.kafka.serde.RoninEventSerde
+import com.projectronin.kafka.serialization.RoninEventDeserializer
+import com.projectronin.kafka.serialization.RoninEventSerde
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.errors.LogAndFailExceptionHandler

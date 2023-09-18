@@ -29,7 +29,7 @@ class ProducerPropertiesTest {
         assertThat(props[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG])
             .isEqualTo("org.apache.kafka.common.serialization.StringSerializer")
         assertThat(props[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG])
-            .isEqualTo("com.projectronin.kafka.serde.RoninEventSerializer")
+            .isEqualTo("com.projectronin.kafka.serialization.RoninEventSerializer")
     }
 
     @Test

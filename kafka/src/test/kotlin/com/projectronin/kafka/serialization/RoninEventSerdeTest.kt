@@ -1,4 +1,4 @@
-package com.projectronin.kafka.serde
+package com.projectronin.kafka.serialization
 
 import io.mockk.mockk
 import io.mockk.verify
