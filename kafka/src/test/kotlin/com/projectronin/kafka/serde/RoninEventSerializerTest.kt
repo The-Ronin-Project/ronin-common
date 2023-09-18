@@ -1,6 +1,8 @@
 package com.projectronin.kafka.serde
 
+import com.projectronin.common.PatientId
 import com.projectronin.common.ResourceId
+import com.projectronin.common.TenantId
 import com.projectronin.kafka.data.RoninEvent
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -16,6 +18,7 @@ import java.util.*
 
 class RoninEventSerializerTest {
     private data class Foo(val bar: String)
+
     private val serializer = RoninEventSerializer<Foo>()
 
     @AfterEach
@@ -47,8 +50,8 @@ class RoninEventSerializerTest {
             dataSchema = "http://schemas/asset",
             type = "ronin.ehr.document-reference.create",
             data = Foo("carl was here"),
-            tenantId = "apposnd",
-            patientId = "patient123",
+            tenantId = TenantId("apposnd"),
+            patientId = PatientId("patient123"),
             resourceId = ResourceId("resourceType", "resourceId")
         )
 
@@ -76,12 +79,18 @@ class RoninEventSerializerTest {
             dataSchema = "http://schemas/asset",
             type = "ronin.ehr.document-reference.create",
             data = Foo("carl was here"),
-            tenantId = "apposnd",
-            patientId = "patient123",
+            tenantId = TenantId("apposnd"),
+            patientId = PatientId("patient123"),
             resourceId = ResourceId("resourceType", "resourceId")
         )
 
         val headers = RecordHeaders()
+        serializer.configure(
+            mutableMapOf(
+                RoninEventSerializer.RONIN_SERIALIZE_LEGACY_CONFIG to "TEST,WRAPPER,DUMMY"
+            ),
+            false
+        )
         val bytes = serializer.serialize("topic", headers, event)
 
         assertThat(bytes?.decodeToString()).isEqualTo("{\"bar\":\"carl was here\"}")
@@ -103,6 +112,12 @@ class RoninEventSerializerTest {
         )
 
         val headers = RecordHeaders()
+        serializer.configure(
+            mutableMapOf(
+                RoninEventSerializer.RONIN_SERIALIZE_LEGACY_CONFIG to "WRAPPER"
+            ),
+            false
+        )
         val bytes = serializer.serialize("topic", headers, event)
 
         assertThat(bytes?.decodeToString()).isEqualTo("{\"bar\":\"carl was here\"}")

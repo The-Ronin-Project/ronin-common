@@ -1,14 +1,15 @@
 package com.projectronin.kafka.serde
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.projectronin.common.PatientId
 import com.projectronin.common.ResourceId
+import com.projectronin.common.TenantId
 import com.projectronin.kafka.data.RoninEvent
 import com.projectronin.kafka.data.RoninEvent.Companion.DEFAULT_CONTENT_TYPE
 import com.projectronin.kafka.data.RoninEventHeaders
 import com.projectronin.kafka.exceptions.ConfigurationException
 import com.projectronin.kafka.exceptions.EventHeaderMissing
 import com.projectronin.kafka.exceptions.UnknownEventType
-import jdk.jshell.spi.ExecutionControl.NotImplementedException
 import org.apache.kafka.common.header.Headers
 import org.apache.kafka.common.serialization.Deserializer
 import java.time.Instant
@@ -33,7 +34,7 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
     }
 
     override fun deserialize(topic: String, bytes: ByteArray?): RoninEvent<T> {
-        throw NotImplementedException("Deserialize method without headers is not supported by this deserializer")
+        throw UnsupportedOperationException("Deserialize method without headers is not supported by this deserializer")
     }
 
     override fun deserialize(topic: String, headers: Headers, bytes: ByteArray?): RoninEvent<T> {
@@ -87,9 +88,9 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
             type = type,
             source = roninHeaders.getValue(RoninEventHeaders.SOURCE),
             dataContentType = roninHeaders.getValue(RoninEventHeaders.CONTENT_TYPE),
-            resourceId = ResourceId.parse(roninHeaders.getValue(RoninEventHeaders.SUBJECT)),
-            tenantId = roninHeaders[RoninEventHeaders.TENANT_ID],
-            patientId = roninHeaders[RoninEventHeaders.PATIENT_ID],
+            resourceId = ResourceId.parseOrNull(roninHeaders[RoninEventHeaders.SUBJECT]),
+            tenantId = roninHeaders[RoninEventHeaders.TENANT_ID]?.let { TenantId(it) },
+            patientId = roninHeaders[RoninEventHeaders.PATIENT_ID]?.let { PatientId(it) },
             data = data
         )
     }
@@ -114,7 +115,7 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
             dataSchema = "unknown",
             type = roninHeaders.getValue(dataType),
             version = roninHeaders.getValue(wrapperVersion),
-            tenantId = roninHeaders.getValue(tenantId),
+            tenantId = TenantId(roninHeaders.getValue(tenantId)),
             data = data
         )
     }

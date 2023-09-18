@@ -12,6 +12,19 @@ import com.projectronin.kafka.data.RoninEventHeaders as Header
 class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
     private val mapper: ObjectMapper = com.projectronin.kafka.config.MapperFactory.mapper
     private val instantFormatter = DateTimeFormatter.ISO_INSTANT
+    private val legacyOptions: MutableSet<String> = mutableSetOf()
+
+    companion object {
+        const val RONIN_SERIALIZE_LEGACY_CONFIG = "ronin.serializer.legacy"
+        const val LEGACY_WRAPPER_OPTION = "WRAPPER"
+    }
+
+    override fun configure(configs: MutableMap<String, *>, isKey: Boolean) {
+        super.configure(configs, isKey)
+        if (configs.containsKey(RONIN_SERIALIZE_LEGACY_CONFIG)) {
+            legacyOptions.addAll(configs[RONIN_SERIALIZE_LEGACY_CONFIG].toString().split(","))
+        }
+    }
 
     override fun serialize(topic: String, message: RoninEvent<T>?): ByteArray {
         throw SerializationException(
@@ -22,7 +35,10 @@ class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
 
     override fun serialize(topic: String, headers: Headers, message: RoninEvent<T>?): ByteArray? {
         return message?.let {
-            writeRoninWrapperHeaders(headers, message)
+            if (legacyOptions.contains(LEGACY_WRAPPER_OPTION)) {
+                writeRoninWrapperHeaders(headers, message)
+            }
+
             writeHeaders(headers, message)
             mapper.writeValueAsBytes(message.data)
         }
@@ -40,10 +56,10 @@ class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
         }
 
         message.tenantId?.let {
-            headers.add(StringHeader(Header.TENANT_ID, message.tenantId))
+            headers.add(StringHeader(Header.TENANT_ID, message.tenantId.value))
         }
         message.patientId?.let {
-            headers.add(StringHeader(Header.PATIENT_ID, message.patientId))
+            headers.add(StringHeader(Header.PATIENT_ID, message.patientId.value))
         }
         message.resourceId?.let {
             headers.add(StringHeader(Header.SUBJECT, message.resourceId.toString()))
@@ -55,10 +71,10 @@ class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
         headers.apply {
             add(StringHeader("ronin_wrapper_version", message.version))
             add(StringHeader("ronin_source_service", message.source))
-            add(StringHeader("ronin_tenant_id", message.tenantId ?: "unknown"))
+            add(StringHeader("ronin_tenant_id", message.tenantId?.value ?: "unknown"))
             add(StringHeader("ronin_data_type", message.type))
         }
     }
 }
 
-fun Headers.get(key: String) = lastHeader(key).value().decodeToString()
+fun Headers.get(key: String) = lastHeader(key)?.value()?.decodeToString()

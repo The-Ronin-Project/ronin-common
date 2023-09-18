@@ -13,6 +13,8 @@ dependencies {
     implementation(libs.spring.core)
     implementation(libs.spring.context)
 
+    implementation(libs.micrometer.statsd)
+
     testImplementation(libs.assertj)
     testImplementation(libs.kotlinx.coroutines)
     testImplementation(libs.kotlinx.coroutines.test)
