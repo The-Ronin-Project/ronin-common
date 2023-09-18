@@ -1,7 +1,7 @@
 package com.projectronin.kafka.config
 
 import com.projectronin.kafka.data.RoninEvent
-import com.projectronin.kafka.serde.RoninEventDeserializer.Companion.RONIN_DESERIALIZATION_TYPES_CONFIG
+import com.projectronin.kafka.serialization.RoninEventDeserializer.Companion.RONIN_DESERIALIZATION_TYPES_CONFIG
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.common.config.SaslConfigs
 import org.apache.kafka.common.serialization.Serdes.StringSerde
@@ -25,7 +25,7 @@ class StreamPropertiesTest {
         assertThat(props[StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG])
             .isEqualTo("org.apache.kafka.common.serialization.Serdes\$StringSerde")
         assertThat(props[StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG])
-            .isEqualTo("com.projectronin.kafka.serde.RoninEventSerde")
+            .isEqualTo("com.projectronin.kafka.serialization.RoninEventSerde")
         assertThat(props[StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG])
             .isEqualTo("org.apache.kafka.streams.errors.LogAndFailExceptionHandler")
     }

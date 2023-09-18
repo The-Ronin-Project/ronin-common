@@ -1,4 +1,4 @@
-package com.projectronin.kafka.serde
+package com.projectronin.kafka.serialization
 
 import com.projectronin.kafka.data.RoninEvent
 import org.apache.kafka.common.serialization.Deserializer

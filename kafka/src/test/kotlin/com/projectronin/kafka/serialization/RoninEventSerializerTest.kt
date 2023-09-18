@@ -1,4 +1,4 @@
-package com.projectronin.kafka.serde
+package com.projectronin.kafka.serialization
 
 import com.projectronin.common.PatientId
 import com.projectronin.common.ResourceId

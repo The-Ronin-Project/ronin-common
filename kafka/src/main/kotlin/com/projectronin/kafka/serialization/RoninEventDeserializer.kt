@@ -1,4 +1,4 @@
-package com.projectronin.kafka.serde
+package com.projectronin.kafka.serialization
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.projectronin.common.PatientId
