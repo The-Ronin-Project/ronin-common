@@ -4,10 +4,8 @@ plugins {
 
 dependencies {
     api(project(":common"))
-    implementation(libs.jackson)
-    implementation(libs.jackson.datatype.jsr310)
-    implementation(libs.jackson.module.parameterNames)
-    api(libs.kafka)
+    implementation(libs.bundles.jackson)
+    api(libs.kafka.clients)
     api(libs.kafka.streams)
     implementation(libs.kotlin.logging)
     implementation(libs.spring.core)
