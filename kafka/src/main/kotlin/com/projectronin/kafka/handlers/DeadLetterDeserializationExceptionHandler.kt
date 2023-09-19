@@ -10,6 +10,7 @@ import org.apache.kafka.streams.errors.DeserializationExceptionHandler
 import org.apache.kafka.streams.processor.ProcessorContext
 
 class DeadLetterDeserializationExceptionHandler : DeserializationExceptionHandler {
+    private var configs: MutableMap<String, *> = mutableMapOf<String, Any>()
     private val logger = KotlinLogging.logger {}
     private var dlq: String? = null
     private var producer: Producer<ByteArray, ByteArray>? = null
@@ -20,10 +21,11 @@ class DeadLetterDeserializationExceptionHandler : DeserializationExceptionHandle
 
     override fun configure(configs: MutableMap<String, *>?) {
         configs?.let {
-            dlq = configs[DEAD_LETTER_TOPIC_CONFIG] as String?
-                ?: throw ConfigurationException("Missing required configuration. $DEAD_LETTER_TOPIC_CONFIG")
-            producer = DeadLetterProducer.producer(configs)
-        } ?: throw ConfigurationException("Missing required configuration. $DEAD_LETTER_TOPIC_CONFIG")
+            this.configs = configs
+        }
+
+        dlq = this.configs[DEAD_LETTER_TOPIC_CONFIG] as String?
+            ?: throw ConfigurationException("Missing required configuration. $DEAD_LETTER_TOPIC_CONFIG")
     }
 
     override fun handle(
@@ -31,6 +33,10 @@ class DeadLetterDeserializationExceptionHandler : DeserializationExceptionHandle
         record: ConsumerRecord<ByteArray, ByteArray>,
         exception: Exception?
     ): DeserializationExceptionHandler.DeserializationHandlerResponse {
+        if (producer == null && dlq != null) {
+            producer = DeadLetterProducer.producer(configs)
+        }
+
         producer?.send(
             ProducerRecord(
                 /* topic = */ dlq,

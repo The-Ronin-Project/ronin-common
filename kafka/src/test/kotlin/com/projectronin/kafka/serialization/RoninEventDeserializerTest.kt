@@ -244,7 +244,7 @@ class RoninEventDeserializerTest {
         val headers = RecordHeaders(
             mutableListOf(
                 StringHeader("ronin_source_service", "test"),
-                StringHeader("ronin_wrapper_version", "1.0"),
+                StringHeader("ronin_wrapper_version", "1"),
                 StringHeader("ronin_tenant_id", "apposnd"),
                 StringHeader("ronin_data_type", "stuff.create")
             )
@@ -254,7 +254,7 @@ class RoninEventDeserializerTest {
         assertThat(event).isNotNull
         assertThat(event.id).isEqualTo(UUID(0, 0))
         assertThat(event.source).isEqualTo("test")
-        assertThat(event.version).isEqualTo("1.0")
+        assertThat(event.version).isEqualTo("1")
         assertThat(event.type).isEqualTo("stuff.create")
         assertThat(event.dataContentType).isEqualTo("application/json")
         assertThat(event.dataSchema).isEqualTo("unknown")

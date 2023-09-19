@@ -43,7 +43,7 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
             .associate { it.key() to it.value().decodeToString() }
 
         return when (roninHeaders["ronin_wrapper_version"]) {
-            "1.0" -> {
+            "1.0", "1" -> {
                 fromRoninWrapper(topic, roninHeaders, bytes)
             }
 
