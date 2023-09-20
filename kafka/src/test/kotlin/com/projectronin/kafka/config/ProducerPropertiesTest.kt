@@ -3,7 +3,6 @@ package com.projectronin.kafka.config
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.config.SaslConfigs
-import org.apache.kafka.common.security.auth.SecurityProtocol
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
