@@ -19,6 +19,13 @@ import org.springframework.security.core.GrantedAuthority
 
 class RoninClaimsAuthenticationTest {
     @Test
+    fun roninClaimsKey() {
+        assertThat(RoninClaimsAuthentication.roninClaimsKey).isEqualTo(
+            "urn:projectronin:authorization:claims:version:1"
+        )
+    }
+
+    @Test
     fun `it works`() {
         val claims = RoninClaims(
             user = RoninUser(
