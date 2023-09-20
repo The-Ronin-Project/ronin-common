@@ -19,7 +19,7 @@ class ClusterPropertiesTest {
         val properties = ClusterProperties(bootstrapServers, securityProtocol = SecurityProtocol.PLAINTEXT)
 
         assertThat(properties[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG]).isEqualTo(bootstrapServers)
-        assertThat(properties[CommonClientConfigs.SECURITY_PROTOCOL_CONFIG]).isEqualTo(SecurityProtocol.PLAINTEXT)
+        assertThat(properties[CommonClientConfigs.SECURITY_PROTOCOL_CONFIG]).isEqualTo(SecurityProtocol.PLAINTEXT.name)
         assertThat(properties.containsKey(SaslConfigs.SASL_MECHANISM)).isEqualTo(false)
         assertThat(properties.containsKey(SaslConfigs.SASL_JAAS_CONFIG)).isEqualTo(false)
     }
@@ -43,7 +43,7 @@ class ClusterPropertiesTest {
         )
 
         assertThat(properties[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG]).isEqualTo(bootstrapServers)
-        assertThat(properties[CommonClientConfigs.SECURITY_PROTOCOL_CONFIG]).isEqualTo(SecurityProtocol.SASL_SSL)
+        assertThat(properties[CommonClientConfigs.SECURITY_PROTOCOL_CONFIG]).isEqualTo(SecurityProtocol.SASL_SSL.name)
         assertThat(properties[SaslConfigs.SASL_MECHANISM]).isEqualTo("SCRAM-SHA-512")
         assertThat(properties[SaslConfigs.SASL_JAAS_CONFIG].toString().contains(username)).isEqualTo(true)
         assertThat(properties[SaslConfigs.SASL_JAAS_CONFIG].toString().contains(password)).isEqualTo(true)
@@ -60,7 +60,7 @@ class ClusterPropertiesTest {
         )
 
         assertThat(properties[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG]).isEqualTo(bootstrapServers)
-        assertThat(properties[CommonClientConfigs.SECURITY_PROTOCOL_CONFIG]).isEqualTo(SecurityProtocol.SASL_SSL)
+        assertThat(properties[CommonClientConfigs.SECURITY_PROTOCOL_CONFIG]).isEqualTo(SecurityProtocol.SASL_SSL.name)
         assertThat(properties[SaslConfigs.SASL_MECHANISM]).isEqualTo("SCRAM-SHA-512")
         assertThat(properties[SaslConfigs.SASL_JAAS_CONFIG].toString().contains(username)).isEqualTo(true)
         assertThat(properties[SaslConfigs.SASL_JAAS_CONFIG].toString().contains(password)).isEqualTo(true)
@@ -77,7 +77,7 @@ class ClusterPropertiesTest {
         )
 
         assertThat(properties[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG]).isEqualTo(bootstrapServers)
-        assertThat(properties[CommonClientConfigs.SECURITY_PROTOCOL_CONFIG]).isEqualTo(SecurityProtocol.SASL_SSL)
+        assertThat(properties[CommonClientConfigs.SECURITY_PROTOCOL_CONFIG]).isEqualTo(SecurityProtocol.SASL_SSL.name)
         assertThat(properties[SaslConfigs.SASL_MECHANISM]).isEqualTo("SCRAM-SHA-512")
         assertThat(properties[SaslConfigs.SASL_JAAS_CONFIG].toString().contains(username)).isEqualTo(true)
         assertThat(properties[SaslConfigs.SASL_JAAS_CONFIG].toString().contains(password)).isEqualTo(true)
@@ -94,11 +94,9 @@ class ClusterPropertiesTest {
         )
 
         assertThat(properties[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG]).isEqualTo(bootstrapServers)
-        assertThat(properties[CommonClientConfigs.SECURITY_PROTOCOL_CONFIG]).isEqualTo(SecurityProtocol.SASL_SSL)
+        assertThat(properties[CommonClientConfigs.SECURITY_PROTOCOL_CONFIG]).isEqualTo(SecurityProtocol.SASL_SSL.name)
         assertThat(properties[SaslConfigs.SASL_MECHANISM]).isEqualTo("Kent")
         assertThat(properties[SaslConfigs.SASL_JAAS_CONFIG].toString().contains(username)).isEqualTo(true)
         assertThat(properties[SaslConfigs.SASL_JAAS_CONFIG].toString().contains(password)).isEqualTo(true)
     }
-
-
 }

@@ -3,6 +3,7 @@ package com.projectronin.kafka.config
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.config.SaslConfigs
+import org.apache.kafka.common.security.auth.SecurityProtocol
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -11,7 +12,7 @@ class ProducerPropertiesTest {
     @Test
     fun `test defaults`() {
         val props = ProducerProperties(
-            clusterProperties = ClusterProperties(bootstrapServers = "kafka:9092")
+            clusterProperties = ClusterProperties(bootstrapServers = "kafka:9092", saslUsername = "user", saslPassword = "pass")
         )
 
         assertThat(props[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG]).isEqualTo("kafka:9092")
