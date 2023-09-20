@@ -11,7 +11,7 @@ class ProducerPropertiesTest {
     @Test
     fun `test defaults`() {
         val props = ProducerProperties(
-            clusterProperties = ClusterProperties(bootstrapServers = "kafka:9092")
+            clusterProperties = ClusterProperties(bootstrapServers = "kafka:9092", saslUsername = "user", saslPassword = "pass")
         )
 
         assertThat(props[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG]).isEqualTo("kafka:9092")

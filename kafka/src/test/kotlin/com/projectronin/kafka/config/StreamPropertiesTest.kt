@@ -4,6 +4,7 @@ import com.projectronin.kafka.data.RoninEvent
 import com.projectronin.kafka.serialization.RoninEventDeserializer.Companion.RONIN_DESERIALIZATION_TYPES_CONFIG
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.common.config.SaslConfigs
+import org.apache.kafka.common.security.auth.SecurityProtocol
 import org.apache.kafka.common.serialization.Serdes.StringSerde
 import org.apache.kafka.streams.StreamsConfig
 import org.assertj.core.api.Assertions.assertThat
@@ -13,7 +14,7 @@ class StreamPropertiesTest {
 
     @Test
     fun `defaults test`() {
-        val clusterProps = ClusterProperties(bootstrapServers = "kafka:9092")
+        val clusterProps = ClusterProperties(bootstrapServers = "kafka:9092", saslUsername = "user", saslPassword = "pass")
         val props = StreamProperties(clusterProperties = clusterProps, "appId")
 
         assertThat(props[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG]).isEqualTo("kafka:9092")
@@ -32,7 +33,7 @@ class StreamPropertiesTest {
 
     @Test
     fun `Test adding deserialization types`() {
-        val clusterProps = ClusterProperties(bootstrapServers = "kafka:9092")
+        val clusterProps = ClusterProperties(bootstrapServers = "kafka:9092", SecurityProtocol.PLAINTEXT)
         val props = StreamProperties(clusterProperties = clusterProps, "appId")
 
         props.addDeserializationType("javaClass", StringSerde::class.java)
