@@ -11,14 +11,14 @@ open class KafkaConfiguration {
     open fun clusterProperties(
         @Value("\${ronin.kafka.bootstrap-servers}")
         bootstrapServers: String,
-        @Value("\${ronin.kafka.security-protocol:}")
-        securityProtocol: String?,
-        @Value("\${ronin.kafka.sasl.mechanism:}")
-        saslMechanism: String?,
-        @Value("\${ronin.kafka.sasl.username:}")
-        saslUsername: String?,
-        @Value("\${ronin.kafka.sasl.password:}")
-        saslPassword: String?
+        @Value("\${ronin.kafka.security-protocol:#{null}}")
+        securityProtocol: String? = null,
+        @Value("\${ronin.kafka.sasl.mechanism:#{null}}")
+        saslMechanism: String? = null,
+        @Value("\${ronin.kafka.sasl.username:#{null}}")
+        saslUsername: String? = null,
+        @Value("\${ronin.kafka.sasl.password:#{null}}")
+        saslPassword: String? = null
     ): ClusterProperties {
         return ClusterProperties(
             bootstrapServers = bootstrapServers,
