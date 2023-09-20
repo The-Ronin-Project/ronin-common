@@ -1,9 +1,9 @@
-package com.projectronin.common.auth
+package com.projectronin.auth
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.convertValue
-import com.projectronin.common.auth.token.RoninClaims
-import com.projectronin.common.auth.token.RoninUserType
+import com.projectronin.auth.token.RoninClaims
+import com.projectronin.auth.token.RoninUserType
 
 interface RoninClaimsAuthentication : RoninAuthentication {
     companion object {

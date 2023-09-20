@@ -1,4 +1,4 @@
-package com.projectronin.common.auth.token
+package com.projectronin.auth.token
 
 class RoninUser(
     val id: String,

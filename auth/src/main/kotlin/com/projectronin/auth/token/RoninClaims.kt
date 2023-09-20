@@ -1,4 +1,4 @@
-package com.projectronin.common.auth.token
+package com.projectronin.auth.token
 
 /**
  * Meant to be extracted from a JWT token, a collection of claims related to the Project Ronin auth system.

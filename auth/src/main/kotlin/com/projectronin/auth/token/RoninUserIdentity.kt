@@ -1,4 +1,4 @@
-package com.projectronin.common.auth.token
+package com.projectronin.auth.token
 
 //     - type: PROVIDER_FHIR_ID
 //       tenant: v7r1eczk

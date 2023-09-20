@@ -1,6 +1,6 @@
-package com.projectronin.common.auth
+package com.projectronin.auth
 
-import com.projectronin.common.auth.token.RoninClaims
+import com.projectronin.auth.token.RoninClaims
 import org.springframework.security.core.Authentication
 
 /**

@@ -1,4 +1,4 @@
-package com.projectronin.common.auth.token
+package com.projectronin.auth.token
 
 //     - type: SMART_ON_FHIR_EPIC
 //       tenant: v7r1eczk
