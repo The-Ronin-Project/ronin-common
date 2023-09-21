@@ -8,11 +8,12 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 open class KafkaConfiguration {
+
     @Bean
     open fun clusterProperties(
         @Value("\${ronin.kafka.bootstrap-servers}")
         bootstrapServers: String,
-        @Value("\${ronin.kafka.security-protocol:#{null}")
+        @Value("\${ronin.kafka.security-protocol:#{null}}")
         securityProtocol: String? = null,
         @Value("\${ronin.kafka.sasl.mechanism:#{null}}")
         saslMechanism: String? = null,
