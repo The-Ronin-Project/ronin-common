@@ -3,6 +3,7 @@ rootProject.name = "ronin-common-root"
 // libraries
 include(":common")
 include(":kafka")
+include(":auth")
 
 // catalog
 include(":ronin-common-catalog")
