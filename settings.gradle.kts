@@ -4,6 +4,7 @@ rootProject.name = "ronin-common-root"
 include(":common")
 include(":kafka")
 include(":auth")
+include(":auth:auth-m2m-client")
 
 // catalog
 include(":ronin-common-catalog")

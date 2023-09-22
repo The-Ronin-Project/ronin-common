@@ -19,7 +19,7 @@ kafka-streams = { module = "org.apache.kafka:kafka-streams", version.ref = "kafk
 kafka-streams-test-utils = { module = "org.apache.kafka:kafka-streams-test-utils", version.ref = "kafka" }
 
 kotlin-logging = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "kotlinlogging" }
-kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 
 micrometer-statsd = { module = "io.micrometer:micrometer-registry-statsd", version.ref = "micrometer" }
 
