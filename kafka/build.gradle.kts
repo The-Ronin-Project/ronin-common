@@ -14,7 +14,7 @@ dependencies {
     implementation(libs.micrometer.statsd)
 
     testImplementation(libs.assertj)
-    testImplementation(libs.kotlinx.coroutines)
+    testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
 }
