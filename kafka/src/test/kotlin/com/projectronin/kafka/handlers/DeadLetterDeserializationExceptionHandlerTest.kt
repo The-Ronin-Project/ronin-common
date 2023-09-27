@@ -70,17 +70,4 @@ class DeadLetterDeserializationExceptionHandlerTest {
             handler.configure(null)
         }.isInstanceOf(ConfigurationException::class.java)
     }
-
-    @Test
-    fun `test no producer doesn't blow up `() {
-        // Not really possible unless code is called without configure() being called as the producer
-        // creation would fail itself, but need to handle the case mainly for test writers who forget to call configure
-        val record = ConsumerRecord("original-topic", 0, 13L, "key".toByteArray(), "value".toByteArray())
-        val context = mockk<ProcessorContext>()
-        every { context.toString() } returns ("Context Information")
-
-        val handlerResponse = handler.handle(context, record, Exception("Blew Up"))
-
-        assertThat(handlerResponse).isEqualTo(CONTINUE)
-    }
 }

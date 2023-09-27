@@ -13,7 +13,9 @@ class DeadLetterDeserializationExceptionHandler : DeserializationExceptionHandle
     private var configs: MutableMap<String, *> = mutableMapOf<String, Any>()
     private val logger = KotlinLogging.logger {}
     private var dlq: String? = null
-    private var producer: Producer<ByteArray, ByteArray>? = null
+    private val producer: Producer<ByteArray, ByteArray> by lazy {
+        DeadLetterProducer.producer(configs)
+    }
 
     companion object {
         const val DEAD_LETTER_TOPIC_CONFIG = "ronin.dead.letter.topic"
@@ -33,11 +35,7 @@ class DeadLetterDeserializationExceptionHandler : DeserializationExceptionHandle
         record: ConsumerRecord<ByteArray, ByteArray>,
         exception: Exception?
     ): DeserializationExceptionHandler.DeserializationHandlerResponse {
-        if (producer == null && dlq != null) {
-            producer = DeadLetterProducer.producer(configs)
-        }
-
-        producer?.send(
+        producer.send(
             ProducerRecord(
                 /* topic = */ dlq,
                 /* partition = */ null,
