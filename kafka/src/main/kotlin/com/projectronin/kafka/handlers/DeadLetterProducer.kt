@@ -20,6 +20,6 @@ object DeadLetterProducer {
         dlqConfigs[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = ByteArraySerializer::class.java
         dlqConfigs[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = ByteArraySerializer::class.java
         dlqProducer = MeteredProducer(KafkaProducer(dlqConfigs), meterRegistry)
-        return dlqProducer!!
+        return MeteredProducer(KafkaProducer(dlqConfigs), meterRegistry)
     }
 }

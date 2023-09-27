@@ -5,11 +5,13 @@ import org.apache.kafka.common.security.auth.SecurityProtocol
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Lazy
 
 @Configuration
 open class KafkaConfiguration {
 
     @Bean
+    @Lazy
     open fun clusterProperties(
         @Value("\${ronin.kafka.bootstrap-servers}")
         bootstrapServers: String,

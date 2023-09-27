@@ -11,16 +11,19 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import java.util.*
+import org.springframework.context.annotation.Lazy
+import java.util.Optional
 
 @Configuration
 open class ProducerConfiguration : ApplicationContextAware {
     @Bean(name = ["defaultProducerProperties"])
+    @Lazy
     open fun defaultProducerProperties(clusterProperties: ClusterProperties): ProducerProperties {
         return ProducerProperties(clusterProperties)
     }
 
     @Bean(name = ["defaultProducer"], destroyMethod = "flush")
+    @Lazy
     open fun <T> kafkaProducer(
         producerProperties: ProducerProperties,
         meterRegistry: Optional<MeterRegistry>
