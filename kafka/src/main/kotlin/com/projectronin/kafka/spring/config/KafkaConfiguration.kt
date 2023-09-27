@@ -1,14 +1,18 @@
 package com.projectronin.kafka.spring.config
 
 import com.projectronin.kafka.config.ClusterProperties
+import com.projectronin.kafka.handlers.DeadLetterProducer
+import io.micrometer.core.instrument.MeterRegistry
 import org.apache.kafka.common.security.auth.SecurityProtocol
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Lazy
 
 @Configuration
-open class KafkaConfiguration {
+open class KafkaConfiguration : ApplicationContextAware {
 
     @Bean
     @Lazy
@@ -31,5 +35,9 @@ open class KafkaConfiguration {
             saslUsername = saslUsername,
             saslPassword = saslPassword
         )
+    }
+
+    override fun setApplicationContext(applicationContext: ApplicationContext) {
+        DeadLetterProducer.meterRegistry = applicationContext.getBean(MeterRegistry::class.java)
     }
 }
