@@ -2,7 +2,7 @@
 assertj = "3.23.1"
 coroutines = "1.6.4"
 jackson = "2.15.2"
-kafka = "3.2.1"
+kafka = "3.5.1"
 kotlinlogging = "3.0.5"
 micrometer = "1.10.4"
 mockk = "1.13.5"
