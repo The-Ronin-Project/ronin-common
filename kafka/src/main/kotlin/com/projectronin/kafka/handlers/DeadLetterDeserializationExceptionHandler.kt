@@ -1,5 +1,6 @@
 package com.projectronin.kafka.handlers
 
+import com.projectronin.common.telemetry.addToDDTraceSpan
 import com.projectronin.kafka.exceptions.ConfigurationException
 import mu.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -59,6 +60,8 @@ class DeadLetterDeserializationExceptionHandler : DeserializationExceptionHandle
                 )
             }
         } ?: logger.warn("Cannot write to DLQ as the DLQ Producer was not created.")
+
+        exception?.addToDDTraceSpan()
         return DeserializationExceptionHandler.DeserializationHandlerResponse.CONTINUE
     }
 }

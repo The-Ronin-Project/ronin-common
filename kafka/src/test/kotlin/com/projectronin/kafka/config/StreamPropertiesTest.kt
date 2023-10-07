@@ -14,7 +14,8 @@ class StreamPropertiesTest {
 
     @Test
     fun `defaults test`() {
-        val clusterProps = ClusterProperties(bootstrapServers = "kafka:9092", saslUsername = "user", saslPassword = "pass")
+        val clusterProps =
+            ClusterProperties(bootstrapServers = "kafka:9092", saslUsername = "user", saslPassword = "pass")
         val props = StreamProperties(clusterProperties = clusterProps, "appId")
 
         assertThat(props[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG]).isEqualTo("kafka:9092")
@@ -28,7 +29,9 @@ class StreamPropertiesTest {
         assertThat(props[StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG])
             .isEqualTo("com.projectronin.kafka.serialization.RoninEventSerde")
         assertThat(props[StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG])
-            .isEqualTo("org.apache.kafka.streams.errors.LogAndFailExceptionHandler")
+            .isEqualTo("com.projectronin.kafka.handlers.DeadLetterDeserializationExceptionHandler")
+        assertThat(props[StreamsConfig.DEFAULT_PRODUCTION_EXCEPTION_HANDLER_CLASS_CONFIG])
+            .isEqualTo("com.projectronin.kafka.handlers.LogAndContinueProductionExceptionHandler")
     }
 
     @Test

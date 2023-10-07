@@ -4,14 +4,21 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.projectronin.common.PatientId
 import com.projectronin.common.ResourceId
 import com.projectronin.common.TenantId
+import com.projectronin.common.telemetry.Tags.RONIN_EVENT_ID_TAG
+import com.projectronin.common.telemetry.Tags.RONIN_EVENT_SOURCE_TAG
+import com.projectronin.common.telemetry.Tags.RONIN_EVENT_TYPE_TAG
+import com.projectronin.common.telemetry.Tags.TENANT_TAG
+import com.projectronin.common.telemetry.addTags
 import com.projectronin.kafka.data.RoninEvent
 import com.projectronin.kafka.data.RoninEvent.Companion.DEFAULT_CONTENT_TYPE
 import com.projectronin.kafka.data.RoninEventHeaders
 import com.projectronin.kafka.exceptions.ConfigurationException
 import com.projectronin.kafka.exceptions.EventHeaderMissing
 import com.projectronin.kafka.exceptions.UnknownEventType
+import io.opentracing.util.GlobalTracer
 import org.apache.kafka.common.header.Headers
 import org.apache.kafka.common.serialization.Deserializer
+import org.slf4j.MDC
 import java.time.Instant
 import java.util.*
 import kotlin.reflect.KClass
@@ -41,6 +48,15 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
         val roninHeaders = headers
             .filter { it.value() != null && it.value().isNotEmpty() }
             .associate { it.key() to it.value().decodeToString() }
+
+        mapOf(
+            RONIN_EVENT_ID_TAG to roninHeaders.get(RoninEventHeaders.ID),
+            RONIN_EVENT_SOURCE_TAG to roninHeaders.get(RoninEventHeaders.SOURCE),
+            RONIN_EVENT_TYPE_TAG to roninHeaders.get(RoninEventHeaders.TYPE),
+            TENANT_TAG to roninHeaders.get(RoninEventHeaders.TENANT_ID)
+        )
+            .also { MDC.setContextMap(it) }
+            .also { GlobalTracer.get().activeSpan()?.addTags(it) }
 
         return when (roninHeaders["ronin_wrapper_version"]) {
             "1.0", "1" -> {
@@ -96,7 +112,7 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
     }
 
     // Checks to see if the message was written using the deprecated RoninWrapper and
-    // constructs the RoninEvent appropriately
+// constructs the RoninEvent appropriately
     private fun fromRoninWrapper(topic: String, roninHeaders: Map<String, String>, bytes: ByteArray?): RoninEvent<T> {
         val wrapperVersion = "ronin_wrapper_version"
         val sourceService = "ronin_source_service"

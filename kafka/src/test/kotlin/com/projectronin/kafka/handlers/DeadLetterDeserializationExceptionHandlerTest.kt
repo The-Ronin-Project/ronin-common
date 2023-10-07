@@ -51,7 +51,7 @@ class DeadLetterDeserializationExceptionHandlerTest {
         assertThat(String(dlqRecord.captured.key())).isEqualTo("key")
         assertThat(String(dlqRecord.captured.value())).isEqualTo("value")
 
-        // Callbacks can't throw exceptions. In this case just logging the outcome
+        // Callbacks can't throw exceptions. In this case just telemetry the outcome
         callback.captured.onCompletion(metadata, null)
         callback.captured.onCompletion(null, Exception("Not Thrown"))
     }

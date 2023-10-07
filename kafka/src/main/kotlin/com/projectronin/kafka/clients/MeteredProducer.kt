@@ -1,9 +1,14 @@
 package com.projectronin.kafka.clients
 
 import com.projectronin.common.metrics.record
+import com.projectronin.common.telemetry.Tags.KAFKA_OFFSET_TAG
+import com.projectronin.common.telemetry.Tags.KAFKA_PARTITION_TAG
+import com.projectronin.common.telemetry.Tags.KAFKA_TOPIC_TAG
+import com.projectronin.common.telemetry.addToDDTraceSpan
 import io.micrometer.core.instrument.MeterRegistry
 import mu.KLogger
 import mu.KotlinLogging
+import mu.withLoggingContext
 import org.apache.kafka.clients.producer.Callback
 import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -40,12 +45,21 @@ class MeteredProducer<K, V>(val producer: Producer<K, V>, private val meterRegis
             val success: String =
                 when (exception) {
                     null -> {
-                        logger.debug("successfully sent record {} metadata: `{}`", record.key(), metadata)
+                        withLoggingContext(metadata?.mdc ?: emptyMap()) {
+                            logger.debug("successfully sent record {} metadata: `{}`", record.key(), metadata)
+                        }
                         "true"
                     }
 
                     else -> {
-                        logger.warn("Exception ${exception.message} sending record metadata: `$metadata`")
+                        exception.addToDDTraceSpan()
+                        withLoggingContext(
+                            mapOf(
+                                KAFKA_TOPIC_TAG to record.topic()
+                            )
+                        ) {
+                            logger.warn("Exception ${exception.message} sending record metadata: `$metadata`")
+                        }
                         "false"
                     }
                 }
@@ -78,3 +92,10 @@ suspend fun <K, V> Producer<K, V>.asyncSend(record: ProducerRecord<K, V>): Recor
         }
     }
 }
+
+val RecordMetadata.mdc: Map<String, String?>
+    get() = mapOf(
+        KAFKA_TOPIC_TAG to topic().toString(),
+        KAFKA_PARTITION_TAG to partition().toString(),
+        KAFKA_OFFSET_TAG to offset().toString()
+    )
