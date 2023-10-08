@@ -28,11 +28,9 @@ data class RoninEvent<T>(
 
 val RoninEvent<*>.mdc: Map<String, String?>
     get() = mapOf(
-        "event.id" to id.toString(),
-        "event.version" to version,
-        Tags.TENANT_TAG to (tenantId?.toString()),
-        Tags.PATIENT_TAG to (patientId?.toString()),
-        "event.subject" to (resourceId?.toString()),
-        "event.type" to type,
-        "event.class" to (data?.javaClass?.name)
+        Tags.RONIN_EVENT_ID_TAG to id.toString(),
+        Tags.RONIN_EVENT_VERSION_TAG to version,
+        Tags.TENANT_TAG to (tenantId?.value),
+        Tags.PATIENT_TAG to (patientId?.value),
+        Tags.RONIN_EVENT_TYPE_TAG to type
     )

@@ -11,4 +11,5 @@ object Tags {
     const val RONIN_EVENT_ID_TAG = "ronin.event.id"
     const val RONIN_EVENT_SOURCE_TAG = "ronin.event.source"
     const val RONIN_EVENT_TYPE_TAG = "ronin.event.type"
+    const val RONIN_EVENT_VERSION_TAG = "ronin.event.version"
 }
