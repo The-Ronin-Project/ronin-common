@@ -11,7 +11,6 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.util.*
@@ -39,7 +38,7 @@ class RoninEventTest {
     }
 
     @Test
-    fun `mdc creates a map`(){
+    fun `mdc creates a map`() {
         val testId = UUID.fromString("350e8400-e29b-41d4-a716-000000000000")
         val event = RoninEvent<Foo>(
             version = "3",
