@@ -1,7 +1,6 @@
 package com.projectronin.kafka.streams.transformers
 
 import com.projectronin.kafka.streams.mdc
-import io.opentracing.util.GlobalTracer
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.kstream.Transformer
 import org.apache.kafka.streams.kstream.TransformerSupplier
@@ -22,12 +21,7 @@ class MDCTransformer<K, V> : Transformer<K, V, KeyValue<K, V>> {
     }
 
     override fun transform(key: K?, value: V?): KeyValue<K, V> {
-        val kafkaTags = context?.mdc ?: emptyMap()
-
-        MDC.setContextMap(kafkaTags)
-        GlobalTracer.get().activeSpan()?.apply {
-            setOperationName("Write Audit from Kafka")
-        }
+        context?.apply { MDC.setContextMap(mdc) }
         return KeyValue(key, value)
     }
 

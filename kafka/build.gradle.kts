@@ -7,6 +7,7 @@ dependencies {
     implementation(libs.bundles.jackson)
     api(libs.kafka.clients)
     api(libs.kafka.streams)
+    api(libs.kafka.streams.test.utils)
     implementation(libs.kotlin.logging)
     implementation(libs.spring.core)
     implementation(libs.spring.context)
