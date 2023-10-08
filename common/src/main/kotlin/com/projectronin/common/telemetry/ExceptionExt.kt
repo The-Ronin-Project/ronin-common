@@ -9,7 +9,18 @@ fun Exception.addToDDTraceSpan() {
         setTag(Tags.ERROR, true)
         log(
             mutableMapOf(
-                Fields.ERROR_OBJECT to this
+                Fields.ERROR_OBJECT to this@addToDDTraceSpan
+            )
+        )
+    }
+}
+
+fun Throwable.addToDDTraceSpan() {
+    GlobalTracer.get().activeSpan()?.apply {
+        setTag(Tags.ERROR, true)
+        log(
+            mutableMapOf(
+                Fields.MESSAGE to message
             )
         )
     }
