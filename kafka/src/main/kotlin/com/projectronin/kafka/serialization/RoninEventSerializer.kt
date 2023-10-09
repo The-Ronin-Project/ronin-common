@@ -35,6 +35,8 @@ class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
 
     override fun serialize(topic: String, headers: Headers, message: RoninEvent<T>?): ByteArray? {
         return message?.let {
+            headers.clearPrevious()
+
             if (legacyOptions.contains(LEGACY_WRAPPER_OPTION)) {
                 writeRoninWrapperHeaders(headers, message)
             }
@@ -71,9 +73,22 @@ class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
         headers.apply {
             add(StringHeader("ronin_wrapper_version", message.version))
             add(StringHeader("ronin_source_service", message.source))
-            add(StringHeader("ronin_tenant_id", message.tenantId?.value ?: "unknown"))
+            add(StringHeader(Header.TENANT_ID, message.tenantId?.value ?: "unknown"))
             add(StringHeader("ronin_data_type", message.type))
         }
+    }
+}
+
+private fun Headers.clearPrevious() {
+    this.removeAll { h ->
+        listOf(
+            "ronin_wrapper_version",
+            "ronin_source_service",
+            "ronin_data_type",
+            Header.TENANT_ID,
+            Header.PATIENT_ID,
+            Header.SUBJECT
+        ).contains(h.key())
     }
 }
 

@@ -50,16 +50,21 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
             .associate { it.key() to it.value().decodeToString() }
 
         mapOf(
-            RONIN_EVENT_ID_TAG to roninHeaders.get(RoninEventHeaders.ID),
-            RONIN_EVENT_SOURCE_TAG to roninHeaders.get(RoninEventHeaders.SOURCE),
-            RONIN_EVENT_TYPE_TAG to roninHeaders.get(RoninEventHeaders.TYPE),
-            TENANT_TAG to roninHeaders.get(RoninEventHeaders.TENANT_ID)
+            RONIN_EVENT_ID_TAG to roninHeaders[RoninEventHeaders.ID],
+            RONIN_EVENT_SOURCE_TAG to roninHeaders[RoninEventHeaders.SOURCE],
+            RONIN_EVENT_TYPE_TAG to roninHeaders[RoninEventHeaders.TYPE],
+            TENANT_TAG to roninHeaders[RoninEventHeaders.TENANT_ID]
         )
             .also { MDC.setContextMap(it) }
             .also { GlobalTracer.get().activeSpan()?.addTags(it) }
 
-        return when (roninHeaders["ronin_wrapper_version"]) {
-            "1.0", "1" -> {
+        // if typeMap contains ronin_data_type then Wrapper
+        // if typeMap contains ce_type then Event
+
+        val isWrapper = roninHeaders["ronin_data_type"]?.run { typeMap.containsKey(this) } ?: false
+
+        return when (isWrapper) {
+            true -> {
                 fromRoninWrapper(topic, roninHeaders, bytes)
             }
 
