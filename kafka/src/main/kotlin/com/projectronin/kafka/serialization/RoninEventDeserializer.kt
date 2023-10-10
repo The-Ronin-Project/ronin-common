@@ -4,21 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.projectronin.common.PatientId
 import com.projectronin.common.ResourceId
 import com.projectronin.common.TenantId
-import com.projectronin.common.telemetry.Tags.RONIN_EVENT_ID_TAG
-import com.projectronin.common.telemetry.Tags.RONIN_EVENT_SOURCE_TAG
-import com.projectronin.common.telemetry.Tags.RONIN_EVENT_TYPE_TAG
-import com.projectronin.common.telemetry.Tags.TENANT_TAG
-import com.projectronin.common.telemetry.addTags
 import com.projectronin.kafka.data.RoninEvent
 import com.projectronin.kafka.data.RoninEvent.Companion.DEFAULT_CONTENT_TYPE
 import com.projectronin.kafka.data.RoninEventHeaders
 import com.projectronin.kafka.exceptions.ConfigurationException
 import com.projectronin.kafka.exceptions.EventHeaderMissing
 import com.projectronin.kafka.exceptions.UnknownEventType
-import io.opentracing.util.GlobalTracer
 import org.apache.kafka.common.header.Headers
 import org.apache.kafka.common.serialization.Deserializer
-import org.slf4j.MDC
 import java.time.Instant
 import java.util.*
 import kotlin.reflect.KClass
@@ -48,18 +41,6 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
         val roninHeaders = headers
             .filter { it.value() != null && it.value().isNotEmpty() }
             .associate { it.key() to it.value().decodeToString() }
-
-        mapOf(
-            RONIN_EVENT_ID_TAG to roninHeaders[RoninEventHeaders.ID],
-            RONIN_EVENT_SOURCE_TAG to roninHeaders[RoninEventHeaders.SOURCE],
-            RONIN_EVENT_TYPE_TAG to roninHeaders[RoninEventHeaders.TYPE],
-            TENANT_TAG to roninHeaders[RoninEventHeaders.TENANT_ID]
-        )
-            .also { MDC.setContextMap(it) }
-            .also { GlobalTracer.get().activeSpan()?.addTags(it) }
-
-        // if typeMap contains ronin_data_type then Wrapper
-        // if typeMap contains ce_type then Event
 
         val isWrapper = roninHeaders["ronin_data_type"]?.run { typeMap.containsKey(this) } ?: false
 

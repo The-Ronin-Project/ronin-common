@@ -1,5 +1,7 @@
 package com.projectronin.kafka.streams.transformers
 
+import com.projectronin.kafka.data.RoninEvent
+import com.projectronin.kafka.data.mdc
 import com.projectronin.kafka.streams.mdc
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.kstream.Transformer
@@ -22,6 +24,9 @@ class MDCTransformer<K, V> : Transformer<K, V, KeyValue<K, V>> {
 
     override fun transform(key: K?, value: V?): KeyValue<K, V> {
         context?.apply { MDC.setContextMap(mdc) }
+        if (value is RoninEvent<*>) {
+            context?.apply { (value as RoninEvent<*>).mdc }
+        }
         return KeyValue(key, value)
     }
 

@@ -30,7 +30,6 @@ val RoninEvent<*>.mdc: Map<String, String?>
     get() = mapOf(
         Tags.RONIN_EVENT_ID_TAG to id.toString(),
         Tags.RONIN_EVENT_VERSION_TAG to version,
-        Tags.TENANT_TAG to (tenantId?.value),
-        Tags.PATIENT_TAG to (patientId?.value),
-        Tags.RONIN_EVENT_TYPE_TAG to type
+        Tags.RONIN_EVENT_TYPE_TAG to type,
+        Tags.TENANT_TAG to (tenantId?.value)
     )

@@ -55,7 +55,6 @@ class RoninEventTest {
         assertThat(mdc[Tags.RONIN_EVENT_TYPE_TAG]).isEqualTo("something.create")
         assertThat(mdc[Tags.RONIN_EVENT_VERSION_TAG]).isEqualTo("3")
         assertThat(mdc[Tags.TENANT_TAG]).isEqualTo("apposnd")
-        assertThat(mdc[Tags.PATIENT_TAG]).isEqualTo("patient123")
     }
 
     @AfterEach
