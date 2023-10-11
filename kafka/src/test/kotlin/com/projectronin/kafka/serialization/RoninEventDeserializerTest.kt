@@ -353,4 +353,77 @@ class RoninEventDeserializerTest {
         assertThat(event2.type).isEqualTo("stuff.foo")
         assertThat(event2.data).isEqualTo(Foo("3"))
     }
+
+    @Test
+    fun `deserialize with complete event and wrapper headers as event`() {
+        val testId: UUID = UUID.randomUUID()
+        val deserializer = RoninEventDeserializer<Stuff>()
+        deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to typeValue), false)
+        val headers = RecordHeaders(
+            mutableListOf(
+                StringHeader(RoninEventHeaders.ID, testId.toString()),
+                StringHeader(RoninEventHeaders.SOURCE, "test"),
+                StringHeader(RoninEventHeaders.VERSION, "2"),
+                StringHeader(RoninEventHeaders.TYPE, "stuff.create"),
+                StringHeader(RoninEventHeaders.CONTENT_TYPE, "content"),
+                StringHeader(RoninEventHeaders.DATA_SCHEMA, "schema"),
+                StringHeader(RoninEventHeaders.TIME, "2022-08-08T23:06:40Z"),
+                StringHeader(RoninEventHeaders.SUBJECT, "stuff/3"),
+                StringHeader(RoninEventHeaders.TENANT_ID, "apposnd"),
+                StringHeader(RoninEventHeaders.PATIENT_ID, "somePatientId"),
+                StringHeader("ronin_source_service", "test"),
+                StringHeader("ronin_wrapper_version", "1"),
+                StringHeader("ronin_tenant_id", "apposnd"),
+                StringHeader("ronin_data_type", "foo.create")
+            )
+        )
+        val event = deserializer.deserialize("topic", headers, "{\"id\":\"3\"}".encodeToByteArray())
+
+        assertThat(event).isNotNull
+        assertThat(event.id).isEqualTo(testId)
+        assertThat(event.source).isEqualTo("test")
+        assertThat(event.version).isEqualTo("2")
+        assertThat(event.type).isEqualTo("stuff.create")
+        assertThat(event.dataContentType).isEqualTo("content")
+        assertThat(event.dataSchema).isEqualTo("schema")
+        assertThat(event.time).isEqualTo(fixedInstant)
+        assertThat(event.data).isEqualTo(Stuff("3"))
+        assertThat(event.tenantId).isEqualTo(TenantId("apposnd"))
+        assertThat(event.patientId).isEqualTo(PatientId("somePatientId"))
+    }
+
+    @Test
+    fun `deserialize with complete event and wrapper headers as wrapper`() {
+        val testId: UUID = UUID.randomUUID()
+        val deserializer = RoninEventDeserializer<Stuff>()
+        deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to typeValue), false)
+        val headers = RecordHeaders(
+            mutableListOf(
+                StringHeader(RoninEventHeaders.ID, testId.toString()),
+                StringHeader(RoninEventHeaders.SOURCE, "test"),
+                StringHeader(RoninEventHeaders.VERSION, "2"),
+                StringHeader(RoninEventHeaders.TYPE, "foo.create"),
+                StringHeader(RoninEventHeaders.CONTENT_TYPE, "content"),
+                StringHeader(RoninEventHeaders.DATA_SCHEMA, "schema"),
+                StringHeader(RoninEventHeaders.TIME, "2022-08-08T23:06:40Z"),
+                StringHeader(RoninEventHeaders.SUBJECT, "stuff/3"),
+                StringHeader(RoninEventHeaders.TENANT_ID, "apposnd"),
+                StringHeader(RoninEventHeaders.PATIENT_ID, "somePatientId"),
+                StringHeader("ronin_source_service", "test"),
+                StringHeader("ronin_wrapper_version", "1"),
+                StringHeader("ronin_tenant_id", "apposnd"),
+                StringHeader("ronin_data_type", "stuff.create")
+            )
+        )
+        val event = deserializer.deserialize("topic", headers, "{\"id\":\"3\"}".encodeToByteArray())
+
+        assertThat(event).isNotNull
+        assertThat(event.id).isEqualTo(UUID(0, 0))
+        assertThat(event.source).isEqualTo("test")
+        assertThat(event.version).isEqualTo("1")
+        assertThat(event.type).isEqualTo("stuff.create")
+        assertThat(event.dataContentType).isEqualTo("application/json")
+        assertThat(event.dataSchema).isEqualTo("unknown")
+        assertThat(event.data).isEqualTo(Stuff("3"))
+    }
 }

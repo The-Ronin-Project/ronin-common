@@ -1,18 +1,22 @@
 [versions]
 assertj = "3.23.1"
 coroutines = "1.6.4"
+datadog = "1.21.0"
 jackson = "2.15.2"
 kafka = "3.2.1"
 kotlinlogging = "3.0.5"
 micrometer = "1.10.4"
 mockk = "1.13.5"
+opentracing = "0.33.0"
 spring = "6.0.11"
-spring-security="6.0.6"
+spring-security = "6.0.6"
 
 [libraries]
+datadog-api = { module = "com.datadoghq:dd-trace-api", version.ref = "datadog" }
+
 jackson-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
-jackson-module-parameterNames= { module = "com.fasterxml.jackson.module:jackson-module-parameter-names", version.ref = "jackson" }
+jackson-module-parameterNames = { module = "com.fasterxml.jackson.module:jackson-module-parameter-names", version.ref = "jackson" }
 
 kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
 kafka-streams = { module = "org.apache.kafka:kafka-streams", version.ref = "kafka" }
@@ -23,8 +27,10 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 
 micrometer-statsd = { module = "io.micrometer:micrometer-registry-statsd", version.ref = "micrometer" }
 
-spring-core = {module = "org.springframework:spring-core", version.ref = "spring" }
-spring-context = {module = "org.springframework:spring-context", version.ref = "spring" }
+opentracing-util = { module = "io.opentracing:opentracing-util", version.ref = "opentracing" }
+
+spring-core = { module = "org.springframework:spring-core", version.ref = "spring" }
+spring-context = { module = "org.springframework:spring-context", version.ref = "spring" }
 spring-security-core = { module = "org.springframework.security:spring-security-core", version.ref = "spring-security" }
 
 # Test Libraries
@@ -33,6 +39,6 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 [bundles]
-jackson = [ "jackson-kotlin", "jackson-datatype-jsr310", "jackson-module-parameterNames"]
+jackson = ["jackson-kotlin", "jackson-datatype-jsr310", "jackson-module-parameterNames"]
 
 [plugins]

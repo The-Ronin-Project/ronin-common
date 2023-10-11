@@ -42,8 +42,10 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
             .filter { it.value() != null && it.value().isNotEmpty() }
             .associate { it.key() to it.value().decodeToString() }
 
-        return when (roninHeaders["ronin_wrapper_version"]) {
-            "1.0", "1" -> {
+        val isWrapper = roninHeaders["ronin_data_type"]?.run { typeMap.containsKey(this) } ?: false
+
+        return when (isWrapper) {
+            true -> {
                 fromRoninWrapper(topic, roninHeaders, bytes)
             }
 
@@ -96,7 +98,7 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
     }
 
     // Checks to see if the message was written using the deprecated RoninWrapper and
-    // constructs the RoninEvent appropriately
+// constructs the RoninEvent appropriately
     private fun fromRoninWrapper(topic: String, roninHeaders: Map<String, String>, bytes: ByteArray?): RoninEvent<T> {
         val wrapperVersion = "ronin_wrapper_version"
         val sourceService = "ronin_source_service"

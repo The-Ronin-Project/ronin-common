@@ -3,6 +3,7 @@ package com.projectronin.kafka.data
 import com.projectronin.common.PatientId
 import com.projectronin.common.ResourceId
 import com.projectronin.common.TenantId
+import com.projectronin.common.telemetry.Tags
 import java.time.Instant
 import java.util.UUID
 
@@ -24,3 +25,11 @@ data class RoninEvent<T>(
         internal const val DEFAULT_CONTENT_TYPE = "application/json"
     }
 }
+
+val RoninEvent<*>.mdc: Map<String, String?>
+    get() = mapOf(
+        Tags.RONIN_EVENT_ID_TAG to id.toString(),
+        Tags.RONIN_EVENT_VERSION_TAG to version,
+        Tags.RONIN_EVENT_TYPE_TAG to type,
+        Tags.TENANT_TAG to (tenantId?.value)
+    )
