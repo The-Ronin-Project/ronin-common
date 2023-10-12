@@ -23,10 +23,14 @@ value class TenantId(val value: String) {
                 }
             }
         )
+
+        val apposnd = TenantId("apposnd")
+        val ronin = TenantId("ronin")
+        val mdaoc = TenantId("mdaoc")
     }
 }
 
-private val nonstandardIds = listOf( "apposnd", "mdaoc", "ronin")
+private val nonstandardIds = listOf("apposnd", "mdaoc", "ronin")
 private const val base32Alphabet = "0123456789abcdefghjkmnpqrstvwxyz"
-private val base32Regex = Regex("^[${base32Alphabet}]{8}$")
+private val base32Regex = Regex("^[$base32Alphabet]{8}$")
 private val random = SecureRandom()

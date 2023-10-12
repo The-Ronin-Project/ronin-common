@@ -15,6 +15,18 @@ class TenantIdTest {
         assertDoesNotThrow { TenantId(value) }
     }
 
+    fun `apposnd works`() {
+        assertThat(TenantId.apposnd.value).isEqualTo("apposnd")
+    }
+
+    fun `mdaoc works`() {
+        assertThat(TenantId.mdaoc.value).isEqualTo("mdaoc")
+    }
+
+    fun `ronin works`() {
+        assertThat(TenantId.ronin.value).isEqualTo("ronin")
+    }
+
     @Test
     fun `random generates valid ids`() {
         assertDoesNotThrow {
