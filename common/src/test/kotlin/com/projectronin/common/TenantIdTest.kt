@@ -49,7 +49,7 @@ class TenantIdTest {
     }
 
     @Test
-    fun `must be lowercase letters and numbers`() {
+    fun `no uppercase letters`() {
         val id = TenantId.random().value.uppercase()
 
         val message = assertThrows<IllegalArgumentException> {
@@ -63,5 +63,25 @@ class TenantIdTest {
     @ValueSource(strings = [ "1", "12", "123", "1234", "12345", "123456", "1234567", "123456789"])
     fun `must be 8 characters`(badValue: String) {
         assertThrows<IllegalArgumentException> { TenantId(badValue) }
+    }
+
+    @Test
+    fun `no letter i`() {
+        assertThrows<IllegalArgumentException> { TenantId("1234567i") }
+    }
+
+    @Test
+    fun `no letter l`() {
+        assertThrows<IllegalArgumentException> { TenantId("1234567l") }
+    }
+
+    @Test
+    fun `no letter o`() {
+        assertThrows<IllegalArgumentException> { TenantId("1234567o") }
+    }
+
+    @Test
+    fun `no letter u`() {
+        assertThrows<IllegalArgumentException> { TenantId("1234567u") }
     }
 }
