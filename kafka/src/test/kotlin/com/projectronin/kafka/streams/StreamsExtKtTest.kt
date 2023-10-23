@@ -32,7 +32,7 @@ class StreamsExtKtTest {
             ).apply {
                 put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String()::class.java)
                 put(DeadLetterDeserializationExceptionHandler.DEAD_LETTER_TOPIC_CONFIG, "dlq")
-            }
+            }.toProperties()
         )
         val createInputTopic =
             testDriver.createInputTopic("topic", Serdes.String().serializer(), Serdes.String().serializer())

@@ -6,23 +6,27 @@ import com.projectronin.kafka.serialization.RoninEventDeserializer
 import com.projectronin.kafka.serialization.RoninEventSerde
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.StreamsConfig
-import java.util.*
+import java.util.Properties
 import kotlin.reflect.KClass
 
-class StreamProperties(clusterProperties: Properties, applicationId: String) : Properties() {
+class StreamProperties(clusterProperties: Properties, applicationId: String) {
+    private val internalProperties = Properties()
+
     init {
-        putAll(clusterProperties)
-        put(StreamsConfig.APPLICATION_ID_CONFIG, applicationId)
-        put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.StringSerde::class.java.name)
-        put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, RoninEventSerde::class.qualifiedName)
-        put(
-            StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG,
-            DeadLetterDeserializationExceptionHandler::class.java.name
-        )
-        put(
-            StreamsConfig.DEFAULT_PRODUCTION_EXCEPTION_HANDLER_CLASS_CONFIG,
-            LogAndContinueProductionExceptionHandler::class.java.name
-        )
+        internalProperties.apply {
+            putAll(clusterProperties)
+            put(StreamsConfig.APPLICATION_ID_CONFIG, applicationId)
+            put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.StringSerde::class.java.name)
+            put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, RoninEventSerde::class.qualifiedName)
+            put(
+                StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG,
+                DeadLetterDeserializationExceptionHandler::class.java.name
+            )
+            put(
+                StreamsConfig.DEFAULT_PRODUCTION_EXCEPTION_HANDLER_CLASS_CONFIG,
+                LogAndContinueProductionExceptionHandler::class.java.name
+            )
+        }
     }
 
     fun addDeserializationType(type: String, typeClass: KClass<*>) {
@@ -34,11 +38,20 @@ class StreamProperties(clusterProperties: Properties, applicationId: String) : P
     }
 
     private fun addTypeClass(type: String, typeClass: String) {
-        var typeConfig = getProperty(RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG, "")
+        var typeConfig = internalProperties.getProperty(RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG, "")
         if (typeConfig.isNotEmpty()) {
             typeConfig += ","
         }
         typeConfig += "$type:$typeClass"
-        put(RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG, typeConfig)
+        internalProperties.put(RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG, typeConfig)
+    }
+
+    fun put(key: String, value: Any) {
+        internalProperties.put(key, value)
+    }
+
+    fun toProperties(): Properties = internalProperties
+    operator fun get(key: String): Any? {
+        return internalProperties[key]
     }
 }
