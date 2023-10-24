@@ -9,11 +9,9 @@ import org.apache.kafka.streams.StreamsConfig
 import java.util.Properties
 import kotlin.reflect.KClass
 
-class StreamProperties(clusterProperties: Properties, applicationId: String) {
-    private val internalProperties = Properties()
-
+class StreamProperties(clusterProperties: Properties, applicationId: String, block: Foo.() -> Unit = {}) : Properties() {
     init {
-        internalProperties.apply {
+        apply {
             putAll(clusterProperties)
             put(StreamsConfig.APPLICATION_ID_CONFIG, applicationId)
             put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.StringSerde::class.java.name)
@@ -27,31 +25,40 @@ class StreamProperties(clusterProperties: Properties, applicationId: String) {
                 LogAndContinueProductionExceptionHandler::class.java.name
             )
         }
+        block.invoke(Foo(this))
     }
 
+    @Deprecated("Migrated to a DSL")
     fun addDeserializationType(type: String, typeClass: KClass<*>) {
         addTypeClass(type, typeClass.qualifiedName!!)
     }
 
+    @Deprecated("Migrated to a DSL")
     fun addDeserializationType(type: String, typeClass: Class<*>) {
         addTypeClass(type, typeClass.name)
     }
 
     private fun addTypeClass(type: String, typeClass: String) {
-        var typeConfig = internalProperties.getProperty(RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG, "")
+        var typeConfig = getProperty(RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG, "")
         if (typeConfig.isNotEmpty()) {
             typeConfig += ","
         }
         typeConfig += "$type:$typeClass"
-        internalProperties.put(RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG, typeConfig)
+        put(RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG, typeConfig)
     }
 
-    fun put(key: String, value: Any) {
-        internalProperties.put(key, value)
-    }
+    class Foo(private val properties: Properties) {
+        inline fun <reified T : Any> addDeserializationType(type: String) {
+            addTypeClass(type, T::class.java.name)
+        }
 
-    fun toProperties(): Properties = internalProperties
-    operator fun get(key: String): Any? {
-        return internalProperties[key]
+        fun addTypeClass(type: String, typeClass: String) {
+            var typeConfig = properties.getProperty(RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG, "")
+            if (typeConfig.isNotEmpty()) {
+                typeConfig += ","
+            }
+            typeConfig += "$type:$typeClass"
+            properties[RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG] = typeConfig
+        }
     }
 }

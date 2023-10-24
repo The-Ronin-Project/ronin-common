@@ -37,14 +37,16 @@ class StreamPropertiesTest {
     @Test
     fun `Test adding deserialization types`() {
         val clusterProps = ClusterProperties(bootstrapServers = "kafka:9092", SecurityProtocol.PLAINTEXT)
-        val props = StreamProperties(clusterProperties = clusterProps, "appId")
+        val props = StreamProperties(clusterProperties = clusterProps, "appId") {
+            this.addDeserializationType<StringSerde>("javaClass")
+            this.addDeserializationType<RoninEvent<*>>("kotlinClass")
+        }
 
-        props.addDeserializationType("javaClass", StringSerde::class.java)
-        props.addDeserializationType("kotlinClass", RoninEvent::class)
         assertThat(props[RONIN_DESERIALIZATION_TYPES_CONFIG])
             .isEqualTo(
                 "javaClass:org.apache.kafka.common.serialization.Serdes\$StringSerde," +
                     "kotlinClass:com.projectronin.kafka.data.RoninEvent"
             )
     }
+
 }
