@@ -48,5 +48,4 @@ class StreamPropertiesTest {
                     "kotlinClass:com.projectronin.kafka.data.RoninEvent"
             )
     }
-
 }

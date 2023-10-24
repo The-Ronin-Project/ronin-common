@@ -9,7 +9,7 @@ import org.apache.kafka.streams.StreamsConfig
 import java.util.Properties
 import kotlin.reflect.KClass
 
-class StreamProperties(clusterProperties: Properties, applicationId: String, block: Foo.() -> Unit = {}) : Properties() {
+class StreamProperties(clusterProperties: Properties, applicationId: String, block: StreamPropertyBuilder.() -> Unit = {}) : Properties() {
     init {
         apply {
             putAll(clusterProperties)
@@ -25,7 +25,7 @@ class StreamProperties(clusterProperties: Properties, applicationId: String, blo
                 LogAndContinueProductionExceptionHandler::class.java.name
             )
         }
-        block.invoke(Foo(this))
+        block.invoke(StreamPropertyBuilder(this))
     }
 
     @Deprecated("Migrated to a DSL")
@@ -33,7 +33,7 @@ class StreamProperties(clusterProperties: Properties, applicationId: String, blo
         addTypeClass(type, typeClass.qualifiedName!!)
     }
 
-    @Deprecated("Migrated to a DSL")
+    @Deprecated("Migrated to a DSL", ReplaceWith("{addDeserializationType<T>(type)}"))
     fun addDeserializationType(type: String, typeClass: Class<*>) {
         addTypeClass(type, typeClass.name)
     }
@@ -47,9 +47,13 @@ class StreamProperties(clusterProperties: Properties, applicationId: String, blo
         put(RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG, typeConfig)
     }
 
-    class Foo(private val properties: Properties) {
+    class StreamPropertyBuilder(private val properties: Properties) {
         inline fun <reified T : Any> addDeserializationType(type: String) {
             addTypeClass(type, T::class.java.name)
+        }
+
+        fun put(key: String, value: Any) {
+            properties[key] = value
         }
 
         fun addTypeClass(type: String, typeClass: String) {
