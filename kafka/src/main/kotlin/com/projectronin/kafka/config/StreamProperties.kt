@@ -49,14 +49,14 @@ class StreamProperties(clusterProperties: Properties, applicationId: String, blo
 
     class StreamPropertyBuilder(private val properties: Properties) {
         inline fun <reified T : Any> addDeserializationType(type: String) {
-            addTypeClass(type, T::class.java.name)
+            addDeserializationTypeClass(type, T::class.java.name)
         }
 
         fun put(key: String, value: Any) {
             properties[key] = value
         }
 
-        fun addTypeClass(type: String, typeClass: String) {
+        fun addDeserializationTypeClass(type: String, typeClass: String) {
             var typeConfig = properties.getProperty(RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG, "")
             if (typeConfig.isNotEmpty()) {
                 typeConfig += ","
