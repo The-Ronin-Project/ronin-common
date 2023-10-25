@@ -11,7 +11,7 @@ import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.TopologyTestDriver
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.slf4j.MDC
 
@@ -43,11 +43,27 @@ class StreamsExtKtTest {
         verify {
             MDC.setContextMap(
                 withArg { tags ->
-                    Assertions.assertThat(tags[Tags.KAFKA_TOPIC_TAG]).isEqualTo("topic")
-                    Assertions.assertThat(tags[Tags.KAFKA_PARTITION_TAG]).isEqualTo("0")
-                    Assertions.assertThat(tags[Tags.KAFKA_OFFSET_TAG]).isEqualTo("0")
+                    assertThat(tags[Tags.KAFKA_TOPIC_TAG]).isEqualTo("topic")
+                    assertThat(tags[Tags.KAFKA_PARTITION_TAG]).isEqualTo("0")
+                    assertThat(tags[Tags.KAFKA_OFFSET_TAG]).isEqualTo("0")
                 }
             )
         }
+    }
+
+    @Test
+    fun `test stream factory method`() {
+        var i: Int = 0
+        val topology = stream<String, String>("topic") {
+                kStream ->
+            kStream.peek { _, _ -> i++ }
+        }
+        assertThat(topology).isNotNull
+        val description = topology.describe()
+        val nodes = description.subtopologies().first().nodes()
+        assertThat(nodes.count()).isEqualTo(3)
+        val transformer = nodes.find { n -> n.name().equals("MDC_TRANSFORMER") }
+        assertThat(transformer).isNotNull
+        assertThat(transformer?.predecessors()?.first()?.name()?.startsWith("KSTREAM-SOURCE"))
     }
 }
