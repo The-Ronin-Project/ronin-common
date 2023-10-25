@@ -1,6 +1,7 @@
 package com.projectronin.kafka.config
 
 import com.projectronin.kafka.data.RoninEvent
+import com.projectronin.kafka.handlers.DeadLetterDeserializationExceptionHandler.Companion.DEAD_LETTER_TOPIC_CONFIG
 import com.projectronin.kafka.serialization.RoninEventDeserializer.Companion.RONIN_DESERIALIZATION_TYPES_CONFIG
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.common.config.SaslConfigs
@@ -9,6 +10,8 @@ import org.apache.kafka.common.serialization.Serdes.StringSerde
 import org.apache.kafka.streams.StreamsConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import java.lang.IllegalArgumentException
 
 class StreamPropertiesTest {
 
@@ -38,8 +41,9 @@ class StreamPropertiesTest {
     fun `Test adding deserialization types`() {
         val clusterProps = ClusterProperties(bootstrapServers = "kafka:9092", SecurityProtocol.PLAINTEXT)
         val props = StreamProperties(clusterProperties = clusterProps, "appId") {
-            this.addDeserializationType<StringSerde>("javaClass")
-            this.addDeserializationType<RoninEvent<*>>("kotlinClass")
+            addDeserializationType<StringSerde>("javaClass")
+            addDeserializationType<RoninEvent<*>>("kotlinClass")
+            deadLetterTopic("dlq")
         }
 
         assertThat(props[RONIN_DESERIALIZATION_TYPES_CONFIG])
@@ -47,5 +51,19 @@ class StreamPropertiesTest {
                 "javaClass:org.apache.kafka.common.serialization.Serdes\$StringSerde," +
                     "kotlinClass:com.projectronin.kafka.data.RoninEvent"
             )
+        assertThat(props[DEAD_LETTER_TOPIC_CONFIG]).isEqualTo("dlq")
+    }
+
+    @Test
+    fun `blank dlq throws error`() {
+        val clusterProps = ClusterProperties(bootstrapServers = "kafka:9092", SecurityProtocol.PLAINTEXT)
+
+        assertThrows<IllegalArgumentException> {
+            StreamProperties(clusterProperties = clusterProps, "appId") {
+                addDeserializationType<StringSerde>("javaClass")
+                addDeserializationType<RoninEvent<*>>("kotlinClass")
+                deadLetterTopic("")
+            }
+        }
     }
 }

@@ -21,8 +21,15 @@ fun <K, V> StreamsBuilder.eventStream(topic: String?): KStream<K, V> {
 }
 
 fun <K, V> stream(topic: String, block: (KStream<K, V>) -> Unit): Topology {
+    require(topic.isNotBlank()) { "topic cannot be empty string" }
+    return stream(listOf(topic), block)
+}
+
+fun <K, V> stream(topics: List<String>, block: (KStream<K, V>) -> Unit): Topology {
+    require(topics.isNotEmpty()) { "topics cannot be empty list" }
+    require(topics.all { t -> t.isNotBlank() }) { "topics must contain at least one valid topic" }
     val builder = StreamsBuilder()
-    val kStream: KStream<K, V> = builder.stream(topic)
+    val kStream: KStream<K, V> = builder.stream(topics)
     kStream.transform(MDCTransformerSupplier(), Named.`as`("MDC_TRANSFORMER"))
     block.invoke(kStream)
     return builder.build()

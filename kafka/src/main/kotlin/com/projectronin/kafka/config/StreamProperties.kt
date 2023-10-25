@@ -9,7 +9,11 @@ import org.apache.kafka.streams.StreamsConfig
 import java.util.Properties
 import kotlin.reflect.KClass
 
-class StreamProperties(clusterProperties: Properties, applicationId: String, block: StreamPropertyBuilder.() -> Unit = {}) : Properties() {
+class StreamProperties(
+    clusterProperties: Properties,
+    applicationId: String,
+    block: StreamPropertyBuilder.() -> Unit = {}
+) : Properties() {
     init {
         apply {
             putAll(clusterProperties)
@@ -63,6 +67,11 @@ class StreamProperties(clusterProperties: Properties, applicationId: String, blo
             }
             typeConfig += "$type:$typeClass"
             properties[RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG] = typeConfig
+        }
+
+        fun deadLetterTopic(topic: String) {
+            require(topic.isNotBlank()) { "DLQ topic cannot be blank" }
+            properties[DeadLetterDeserializationExceptionHandler.DEAD_LETTER_TOPIC_CONFIG] = topic
         }
     }
 }
