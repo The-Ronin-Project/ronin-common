@@ -132,7 +132,7 @@ class RoninEventDeserializerTest {
         assertThat(event.dataContentType).isEqualTo("content")
         assertThat(event.dataSchema).isEqualTo("schema")
         assertThat(event.time).isEqualTo(fixedInstant)
-        assertThat(event.data).isNull()
+        assertThat(event.dataOrNull()).isNull()
         assertThat(event.resourceId).isNull()
         assertThat(event.tenantId).isNull()
         assertThat(event.patientId).isNull()
@@ -425,5 +425,17 @@ class RoninEventDeserializerTest {
         assertThat(event.dataContentType).isEqualTo("application/json")
         assertThat(event.dataSchema).isEqualTo("unknown")
         assertThat(event.data).isEqualTo(Stuff("3"))
+    }
+
+    @Test
+    fun testCreateTypesString() {
+        val typeString = RoninEventDeserializer.createDeserializationTypeString(
+            mapOf(
+                "a" to "A",
+                "b" to "B",
+                "c" to "C"
+            )
+        )
+        assertThat(typeString).isEqualTo("a:A,b:B,c:C")
     }
 }

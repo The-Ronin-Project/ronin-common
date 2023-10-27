@@ -1,7 +1,6 @@
 package com.projectronin.kafka.streams.transformers
 
 import com.projectronin.kafka.data.RoninEvent
-import com.projectronin.kafka.data.mdc
 import com.projectronin.kafka.streams.mdc
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.kstream.Transformer
