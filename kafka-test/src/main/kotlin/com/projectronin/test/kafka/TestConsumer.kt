@@ -34,9 +34,7 @@ class TestConsumer<T>(
         expectedCount: Int = 1,
         timeoutSeconds: Long = 30L
     ): List<ConsumerRecord<String, RoninEvent<T>>> {
-        if (!consumer.listTopics().containsKey(topic)) {
-            consumer.subscribe(mutableListOf(topic))
-        }
+        consumer.subscribe(mutableListOf(topic))
 
         val results = mutableListOf<ConsumerRecord<String, RoninEvent<T>>>()
         val timeSource = TimeSource.Monotonic

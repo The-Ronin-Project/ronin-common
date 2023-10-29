@@ -23,4 +23,8 @@ class TestProducer<T>(bootstrapServers: String) {
             ProducerRecord(topic, key, event)
         ).get(30L, TimeUnit.SECONDS)
     }
+
+    fun close() {
+        producer.close()
+    }
 }
