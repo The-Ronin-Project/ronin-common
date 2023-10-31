@@ -43,7 +43,7 @@ class TestConsumer<T>(
         val endBy = timeSource.markNow().plus(timeoutSeconds.seconds)
 
         return consume { recordCount ->
-            recordCount < expectedCount && endBy.compareTo(timeSource.markNow()) > 0
+            recordCount >= expectedCount || endBy.compareTo(timeSource.markNow()) < 0
         }
     }
 
