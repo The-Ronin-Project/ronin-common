@@ -18,9 +18,9 @@ class TestProducer<T>(bootstrapServers: String) {
         RoninEventSerializer<T>()
     )
 
-    fun send(topic: String, key: String, event: RoninEvent<T>): RecordMetadata {
+    fun send(topic: Topic, key: String, event: RoninEvent<T>): RecordMetadata {
         return producer.send(
-            ProducerRecord(topic, key, event)
+            ProducerRecord(topic.topic, key, event)
         ).get(30L, TimeUnit.SECONDS)
     }
 

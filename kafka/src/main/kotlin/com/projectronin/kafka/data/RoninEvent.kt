@@ -7,6 +7,7 @@ import com.projectronin.common.telemetry.Tags
 import java.time.Instant
 import java.util.UUID
 
+@Suppress("LongParameterList")
 class RoninEvent<T>(
     val id: UUID = UUID.randomUUID(),
     val time: Instant = Instant.now(),

@@ -48,7 +48,7 @@ class TestConsumer<T>(
     }
 
     fun consume(
-        until: (resultCount: Int) -> Boolean = { rc -> rc > 0 }
+        until: (resultCount: Int) -> Boolean
     ): List<ConsumerRecord<String, RoninEvent<T>>> {
         val results = mutableListOf<ConsumerRecord<String, RoninEvent<T>>>()
 
