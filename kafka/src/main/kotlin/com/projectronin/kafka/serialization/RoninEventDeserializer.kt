@@ -22,6 +22,11 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
 
     companion object {
         const val RONIN_DESERIALIZATION_TYPES_CONFIG = "ronin.json.deserializer.types"
+
+        fun createDeserializationTypeString(typeMap: Map<String, String>): String {
+            return typeMap.map { entry -> "${entry.key}:${entry.value}" }
+                .reduceRight { f, s -> "$f,$s" }
+        }
     }
 
     override fun configure(configs: MutableMap<String, *>, isKey: Boolean) {

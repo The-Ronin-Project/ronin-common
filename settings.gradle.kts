@@ -3,6 +3,7 @@ rootProject.name = "ronin-common-root"
 // libraries
 include(":common")
 include(":kafka")
+include(":kafka-test")
 include(":auth")
 include(":auth:auth-m2m-client")
 
