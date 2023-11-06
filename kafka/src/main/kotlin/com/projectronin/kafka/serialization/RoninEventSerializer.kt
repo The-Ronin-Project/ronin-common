@@ -38,11 +38,13 @@ class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
             headers.clearPrevious()
 
             if (legacyOptions.contains(LEGACY_WRAPPER_OPTION)) {
-                writeRoninWrapperHeaders(headers, message)
+                writeRoninWrapperHeaders(headers, it)
             }
 
-            writeHeaders(headers, message)
-            mapper.writeValueAsBytes(message.data)
+            writeHeaders(headers, it)
+            it
+                .dataOrNull()
+                ?.let { data -> mapper.writeValueAsBytes(data) }
         }
     }
 

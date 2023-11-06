@@ -183,4 +183,37 @@ class RoninEventSerializerTest {
         assertThat(headers.get("ronin_source_service")).isNull()
         assertThat(headers.get("ronin_data_type")).isNull()
     }
+
+    @Test
+    fun `Test serialize null payload`() {
+        val testId = UUID.randomUUID()
+        mockkStatic(UUID::class)
+        every { UUID.randomUUID() } returns testId
+
+        val event: RoninEvent<Foo> = RoninEvent(
+            source = "prodeng-assets",
+            dataContentType = "application/json",
+            dataSchema = "http://schemas/asset",
+            type = "ronin.ehr.document-reference.create",
+            data = null,
+            tenantId = TenantId("apposnd"),
+            patientId = PatientId("patient123"),
+            resourceId = ResourceId("resourceType", "resourceId")
+        )
+
+        val headers = RecordHeaders()
+        val bytes = serializer.serialize("topic", headers, event)
+
+        assertThat(bytes?.decodeToString()).isNull()
+
+        assertThat(headers.get("ce_id")).isEqualTo(testId.toString())
+        assertThat(headers.get("ce_source")).isEqualTo("prodeng-assets")
+        assertThat(headers.get("ce_specversion")).isEqualTo("2")
+        assertThat(headers.get("ce_type")).isEqualTo("ronin.ehr.document-reference.create")
+        assertThat(headers.get("content-type")).isEqualTo("application/json")
+        assertThat(headers.get("ce_dataschema")).isEqualTo("http://schemas/asset")
+        assertThat(headers.get("ronin_tenant_id")).isEqualTo("apposnd")
+        assertThat(headers.get("ronin_patient_id")).isEqualTo("patient123")
+        assertThat(headers.get("ce_subject")).isEqualTo("resourceType/resourceId")
+    }
 }
