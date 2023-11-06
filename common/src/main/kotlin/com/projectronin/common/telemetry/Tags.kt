@@ -13,9 +13,9 @@ object Tags {
     const val RONIN_EVENT_TYPE_TAG = "ronin.event.type"
     const val RONIN_EVENT_VERSION_TAG = "ronin.event.version"
 
-    const val AUTH_IS_AUTHENTICATED = "auth.is_authenticated"
-    const val AUTH_USER_TYPE = "auth.user_type"
-    const val AUTH_USER_ID = "auth.user_id"
-    const val AUTH_PATIENT_ID = "auth.session.patient_id"
-    const val AUTH_PROVIDER_ID = "auth.session.provider_id"
+    const val RONIN_AUTH_IS_AUTHENTICATED = "ronin.auth.is_authenticated"
+    const val RONIN_AUTH_USER_TYPE = "ronin.auth.user_type"
+    const val RONIN_AUTH_USER_ID = "ronin.auth.user_id"
+    const val RONIN_AUTH_PATIENT_ID = "ronin.auth.session.patient_id"
+    const val RONIN_AUTH_PROVIDER_ID = "ronin.auth.session.provider_id"
 }
