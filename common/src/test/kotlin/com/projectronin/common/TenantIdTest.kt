@@ -10,29 +10,39 @@ import org.junit.jupiter.params.provider.ValueSource
 class TenantIdTest {
 
     @ParameterizedTest
-    @ValueSource(strings = [ "apposnd", "mdaoc", "ronin", "peeng", "demo"])
+    @ValueSource(strings = [ "apposnd", "mdaoc", "ronin", "peeng", "demo", "roninocr"])
     fun `non-standard ids work`(value: String) {
         assertDoesNotThrow { TenantId(value) }
     }
 
+    @Test
     fun `apposnd works`() {
         assertThat(TenantId.apposnd.value).isEqualTo("apposnd")
     }
 
+    @Test
     fun `mdaoc works`() {
         assertThat(TenantId.mdaoc.value).isEqualTo("mdaoc")
     }
 
+    @Test
     fun `ronin works`() {
         assertThat(TenantId.ronin.value).isEqualTo("ronin")
     }
 
+    @Test
     fun `peeng works`() {
         assertThat(TenantId.peeng.value).isEqualTo("peeng")
     }
 
+    @Test
     fun `demo works`() {
         assertThat(TenantId.demo.value).isEqualTo("demo")
+    }
+
+    @Test
+    fun `roninocr works`() {
+        assertThat(TenantId.roninocr.value).isEqualTo("roninocr")
     }
 
     @Test
