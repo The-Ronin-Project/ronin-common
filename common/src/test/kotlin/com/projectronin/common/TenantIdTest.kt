@@ -46,6 +46,11 @@ class TenantIdTest {
     }
 
     @Test
+    fun `ronincer works`() {
+        assertThat(TenantId.ronincer.value).isEqualTo("ronincer")
+    }
+
+    @Test
     fun `random generates valid ids`() {
         assertDoesNotThrow {
             repeat(100) {
