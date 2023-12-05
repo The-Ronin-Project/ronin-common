@@ -65,8 +65,10 @@ class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
         message.patientId?.let {
             headers.add(StringHeader(Header.PATIENT_ID, message.patientId.value))
         }
-        message.resourceId?.let {
-            headers.add(StringHeader(Header.SUBJECT, message.resourceId.toString()))
+        message.subject?.let {
+            // Resource Type contains a "." when the source was also included as part of the type.
+            // To preserve compatibility we will not build the string from the full template, but just resource
+            headers.add(StringHeader(Header.SUBJECT, message.subject))
         }
     }
 

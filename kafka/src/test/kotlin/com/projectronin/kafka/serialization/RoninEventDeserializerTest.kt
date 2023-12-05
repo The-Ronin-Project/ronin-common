@@ -56,7 +56,7 @@ class RoninEventDeserializerTest {
                 StringHeader(RoninEventHeaders.CONTENT_TYPE, "content"),
                 StringHeader(RoninEventHeaders.DATA_SCHEMA, "schema"),
                 StringHeader(RoninEventHeaders.TIME, "2022-08-08T23:06:40Z"),
-                StringHeader(RoninEventHeaders.SUBJECT, "stuff/3"),
+                StringHeader(RoninEventHeaders.SUBJECT, "ronin.source.type/id"),
                 StringHeader(RoninEventHeaders.TENANT_ID, "apposnd"),
                 StringHeader(RoninEventHeaders.PATIENT_ID, "somePatientId")
             )
@@ -74,6 +74,8 @@ class RoninEventDeserializerTest {
         assertThat(event.data).isEqualTo(Stuff("3"))
         assertThat(event.tenantId).isEqualTo(TenantId("apposnd"))
         assertThat(event.patientId).isEqualTo(PatientId("somePatientId"))
+        assertThat(event.resourceId?.type).isEqualTo("type")
+        assertThat(event.resourceId?.id).isEqualTo("id")
     }
 
     @Test

@@ -32,6 +32,12 @@ class RoninEvent<T>(
 
     fun dataOrNull(): T? = _data
 
+    val subject: String? = when {
+        resourceId == null -> null
+        resourceId.type.contains(".") -> "$resourceId"
+        else -> "ronin.$source.$resourceId"
+    }
+
     val mdc: Map<String, String?>
         get() = mapOf(
             Tags.RONIN_EVENT_ID_TAG to id.toString(),
@@ -39,4 +45,8 @@ class RoninEvent<T>(
             Tags.RONIN_EVENT_TYPE_TAG to type,
             Tags.TENANT_TAG to (tenantId?.value)
         )
+}
+
+fun ResourceId.Companion.fromHeaderOrNull(header: String?): ResourceId? {
+    return parseOrNull(header?.split(".")?.last())
 }

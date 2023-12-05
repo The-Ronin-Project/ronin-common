@@ -7,6 +7,7 @@ import com.projectronin.common.TenantId
 import com.projectronin.kafka.data.RoninEvent
 import com.projectronin.kafka.data.RoninEvent.Companion.DEFAULT_CONTENT_TYPE
 import com.projectronin.kafka.data.RoninEventHeaders
+import com.projectronin.kafka.data.fromHeaderOrNull
 import com.projectronin.kafka.exceptions.ConfigurationException
 import com.projectronin.kafka.exceptions.EventHeaderMissing
 import com.projectronin.kafka.exceptions.UnknownEventType
@@ -95,7 +96,7 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
             type = type,
             source = roninHeaders.getValue(RoninEventHeaders.SOURCE),
             dataContentType = roninHeaders.getValue(RoninEventHeaders.CONTENT_TYPE),
-            resourceId = ResourceId.parseOrNull(roninHeaders[RoninEventHeaders.SUBJECT]),
+            resourceId = ResourceId.fromHeaderOrNull(roninHeaders[RoninEventHeaders.SUBJECT]),
             tenantId = roninHeaders[RoninEventHeaders.TENANT_ID]?.let { TenantId(it) },
             patientId = roninHeaders[RoninEventHeaders.PATIENT_ID]?.let { PatientId(it) },
             data = data
