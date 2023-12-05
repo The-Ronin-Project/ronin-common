@@ -58,7 +58,8 @@ class RoninEventDeserializerTest {
                 StringHeader(RoninEventHeaders.TIME, "2022-08-08T23:06:40Z"),
                 StringHeader(RoninEventHeaders.SUBJECT, "ronin.source.type/id"),
                 StringHeader(RoninEventHeaders.TENANT_ID, "apposnd"),
-                StringHeader(RoninEventHeaders.PATIENT_ID, "somePatientId")
+                StringHeader(RoninEventHeaders.PATIENT_ID, "somePatientId"),
+                StringHeader(RoninEventHeaders.RESOURCE_VERSION, "3")
             )
         )
         val event = deserializer.deserialize("topic", headers, "{\"id\":\"3\"}".encodeToByteArray())
@@ -76,6 +77,7 @@ class RoninEventDeserializerTest {
         assertThat(event.patientId).isEqualTo(PatientId("somePatientId"))
         assertThat(event.resourceId?.type).isEqualTo("type")
         assertThat(event.resourceId?.id).isEqualTo("id")
+        assertThat(event.resourceVersion).isEqualTo(3)
     }
 
     @Test
@@ -138,6 +140,7 @@ class RoninEventDeserializerTest {
         assertThat(event.resourceId).isNull()
         assertThat(event.tenantId).isNull()
         assertThat(event.patientId).isNull()
+        assertThat(event.resourceVersion).isNull()
     }
 
     @Test
@@ -439,5 +442,39 @@ class RoninEventDeserializerTest {
             )
         )
         assertThat(typeString).isEqualTo("a:A,b:B,c:C")
+    }
+
+    @Test
+    fun `resourceVersion not Int`() {
+        val testId: UUID = UUID.randomUUID()
+        val deserializer = RoninEventDeserializer<Stuff>()
+        deserializer.configure(mutableMapOf(RONIN_DESERIALIZATION_TYPES_CONFIG to typeValue), false)
+        val headers = RecordHeaders(
+            mutableListOf(
+                StringHeader(RoninEventHeaders.ID, testId.toString()),
+                StringHeader(RoninEventHeaders.SOURCE, "test"),
+                StringHeader(RoninEventHeaders.VERSION, "2"),
+                StringHeader(RoninEventHeaders.TYPE, "stuff.create"),
+                StringHeader(RoninEventHeaders.CONTENT_TYPE, "content"),
+                StringHeader(RoninEventHeaders.DATA_SCHEMA, "schema"),
+                StringHeader(RoninEventHeaders.TIME, "2022-08-08T23:06:40Z"),
+                StringHeader(RoninEventHeaders.RESOURCE_VERSION, "3.0")
+            )
+        )
+        val event = deserializer.deserialize("topic", headers, null)
+
+        assertThat(event).isNotNull
+        assertThat(event.id).isEqualTo(testId)
+        assertThat(event.source).isEqualTo("test")
+        assertThat(event.version).isEqualTo("2")
+        assertThat(event.type).isEqualTo("stuff.create")
+        assertThat(event.dataContentType).isEqualTo("content")
+        assertThat(event.dataSchema).isEqualTo("schema")
+        assertThat(event.time).isEqualTo(fixedInstant)
+        assertThat(event.dataOrNull()).isNull()
+        assertThat(event.resourceId).isNull()
+        assertThat(event.tenantId).isNull()
+        assertThat(event.patientId).isNull()
+        assertThat(event.resourceVersion).isNull()
     }
 }

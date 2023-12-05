@@ -42,9 +42,7 @@ class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
             }
 
             writeHeaders(headers, it)
-            it
-                .dataOrNull()
-                ?.let { data -> mapper.writeValueAsBytes(data) }
+            it.dataOrNull()?.let { data -> mapper.writeValueAsBytes(data) }
         }
     }
 
@@ -57,18 +55,10 @@ class RoninEventSerializer<T> : Serializer<RoninEvent<T>> {
             add(StringHeader(Header.CONTENT_TYPE, message.dataContentType))
             add(StringHeader(Header.DATA_SCHEMA, message.dataSchema))
             add(StringHeader(Header.TIME, instantFormatter.format(message.time)))
-        }
-
-        message.tenantId?.let {
-            headers.add(StringHeader(Header.TENANT_ID, message.tenantId.value))
-        }
-        message.patientId?.let {
-            headers.add(StringHeader(Header.PATIENT_ID, message.patientId.value))
-        }
-        message.subject?.let {
-            // Resource Type contains a "." when the source was also included as part of the type.
-            // To preserve compatibility we will not build the string from the full template, but just resource
-            headers.add(StringHeader(Header.SUBJECT, message.subject))
+            addIfNotNull(Header.SUBJECT, message.subject)
+            addIfNotNull(Header.RESOURCE_VERSION, message.resourceVersion?.toString())
+            addIfNotNull(Header.TENANT_ID, message.tenantId?.value)
+            addIfNotNull(Header.PATIENT_ID, message.patientId?.value)
         }
     }
 
@@ -97,3 +87,4 @@ private fun Headers.clearPrevious() {
 }
 
 fun Headers.get(key: String) = lastHeader(key)?.value()?.decodeToString()
+fun Headers.addIfNotNull(header: String, value: String?) = value?.let { add(StringHeader(header, value)) }

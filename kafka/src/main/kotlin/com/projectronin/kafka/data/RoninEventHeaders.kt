@@ -11,6 +11,7 @@ object RoninEventHeaders {
     const val PATIENT_ID = "ronin_patient_id"
     const val TYPE = "ce_type"
     const val SUBJECT = "ce_subject"
+    const val RESOURCE_VERSION = "ronin_resourceversion"
 
     val required = listOf(
         ID,

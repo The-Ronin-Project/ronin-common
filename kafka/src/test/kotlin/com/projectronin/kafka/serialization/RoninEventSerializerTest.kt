@@ -71,10 +71,11 @@ class RoninEventSerializerTest {
         assertThat(headers.get("ronin_tenant_id")).isEqualTo("apposnd")
         assertThat(headers.get("ronin_patient_id")).isEqualTo("patient123")
         assertThat(headers.get("ce_subject")).isEqualTo("ronin.prodeng-assets.resourceType/resourceId")
+        assertThat(headers.get("ronin_resourceversion")).isNull()
     }
 
     @Test
-    fun `Test serialize default values with expanded resourceType`() {
+    fun `Test serialize with expanded resourceType`() {
         val testId = UUID.randomUUID()
         mockkStatic(UUID::class)
         every { UUID.randomUUID() } returns testId
@@ -87,7 +88,8 @@ class RoninEventSerializerTest {
             data = Foo("carl was here"),
             tenantId = TenantId("apposnd"),
             patientId = PatientId("patient123"),
-            resourceId = ResourceId("ronin.some-authority.resourceType", "resourceId")
+            resourceId = ResourceId("ronin.some-authority.resourceType", "resourceId"),
+            resourceVersion = 3
         )
 
         val headers = RecordHeaders()
@@ -104,6 +106,7 @@ class RoninEventSerializerTest {
         assertThat(headers.get("ronin_tenant_id")).isEqualTo("apposnd")
         assertThat(headers.get("ronin_patient_id")).isEqualTo("patient123")
         assertThat(headers.get("ce_subject")).isEqualTo("ronin.some-authority.resourceType/resourceId")
+        assertThat(headers.get("ronin_resourceversion")).isEqualTo("3")
     }
 
     @Test

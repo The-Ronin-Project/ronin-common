@@ -99,6 +99,7 @@ class RoninEventDeserializer<T> : Deserializer<RoninEvent<T>> {
             resourceId = ResourceId.fromHeaderOrNull(roninHeaders[RoninEventHeaders.SUBJECT]),
             tenantId = roninHeaders[RoninEventHeaders.TENANT_ID]?.let { TenantId(it) },
             patientId = roninHeaders[RoninEventHeaders.PATIENT_ID]?.let { PatientId(it) },
+            resourceVersion = roninHeaders[RoninEventHeaders.RESOURCE_VERSION]?.toIntOrNull(),
             data = data
         )
     }
