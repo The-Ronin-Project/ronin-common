@@ -50,7 +50,7 @@ class RoninEvent<T>(
 
 fun ResourceId.Companion.fromHeaderOrNull(header: String?): ResourceId? {
     val typeAndId = header?.split("/")?.let {
-        if (it.size > 2) throw IllegalArgumentException("Improper format for Resource value")
+        if (it.size > 2 || it.size == 1) throw IllegalArgumentException("Improper format for Resource value")
 
         listOf(it.first().split(".").last(), it.last()).joinToString("/")
     }
