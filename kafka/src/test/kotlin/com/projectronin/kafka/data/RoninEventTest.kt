@@ -1,6 +1,7 @@
 package com.projectronin.kafka.data
 
 import com.projectronin.common.PatientId
+import com.projectronin.common.ResourceId
 import com.projectronin.common.TenantId
 import com.projectronin.common.telemetry.Tags
 import com.projectronin.kafka.data.RoninEvent.Companion.DEFAULT_CONTENT_TYPE
@@ -12,6 +13,7 @@ import io.mockk.unmockkStatic
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.time.Instant
 import java.util.*
 
@@ -35,6 +37,23 @@ class RoninEventTest {
         assertThat(Instant.now().isAfter(event.time)).isTrue()
         assertThat(event.version).isEqualTo(DEFAULT_VERSION)
         assertThat(event.dataContentType).isEqualTo(DEFAULT_CONTENT_TYPE)
+    }
+
+    @Test
+    fun `RoninEvent ResourceIds with dots and dashes`() {
+        val id = "ronin-1PEeQK.QWzOjRADXBY0-TdBOkElsK.jQc7huXbQ-ou0Ga"
+
+        assertThat(ResourceId.fromHeaderOrNull("asset/$id")?.type).isEqualTo("asset")
+        assertThat(ResourceId.fromHeaderOrNull("asset/$id")?.id).isEqualTo(id)
+        assertThat(ResourceId.fromHeaderOrNull("ronin.prodeng-assets.asset/$id")?.type).isEqualTo("ronin.prodeng-assets.asset")
+        assertThat(ResourceId.fromHeaderOrNull("ronin.prodeng-assets.asset/$id")?.id).isEqualTo("ronin-1PEeQK.QWzOjRADXBY0-TdBOkElsK.jQc7huXbQ-ou0Ga")
+
+        assertThrows<IllegalArgumentException> {
+            ResourceId.fromHeaderOrNull("ronin/prodeng-assets/asset/$id")
+        }
+        assertThrows<IllegalArgumentException> {
+            ResourceId.fromHeaderOrNull("ronin.prodeng-assets.asset/1234/5678")
+        }
     }
 
     @Test

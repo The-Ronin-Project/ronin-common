@@ -75,7 +75,7 @@ class RoninEventDeserializerTest {
         assertThat(event.data).isEqualTo(Stuff("3"))
         assertThat(event.tenantId).isEqualTo(TenantId("apposnd"))
         assertThat(event.patientId).isEqualTo(PatientId("somePatientId"))
-        assertThat(event.resourceId?.type).isEqualTo("type")
+        assertThat(event.resourceId?.type).isEqualTo("ronin.source.type")
         assertThat(event.resourceId?.id).isEqualTo("id")
         assertThat(event.resourceVersion).isEqualTo(3)
     }
