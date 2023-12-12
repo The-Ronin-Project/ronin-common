@@ -49,5 +49,5 @@ class RoninEvent<T>(
 }
 
 fun ResourceId.Companion.fromHeaderOrNull(header: String?): ResourceId? {
-    return parseOrNull(header?.split(".")?.last())
+    return parseOrNull(header)
 }
