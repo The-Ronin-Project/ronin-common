@@ -11,7 +11,6 @@ data class ResourceId(
 
     init {
         if (type.contains(".")) logger.warn("Resource.type should not contain '.'")
-        if (id.contains(".")) logger.warn("Resource.id should not contain '.'")
 
         require(!type.contains("/")) { "Resource.type can not contain '/'" }
         require(!id.contains("/")) { "Resource.id can not contain '/'" }
