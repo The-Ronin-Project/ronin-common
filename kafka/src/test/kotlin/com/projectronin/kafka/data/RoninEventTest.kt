@@ -45,9 +45,12 @@ class RoninEventTest {
 
         assertThat(ResourceId.fromHeaderOrNull("asset/$id")?.type).isEqualTo("asset")
         assertThat(ResourceId.fromHeaderOrNull("asset/$id")?.id).isEqualTo(id)
-        assertThat(ResourceId.fromHeaderOrNull("ronin.prodeng-assets.asset/$id")?.type).isEqualTo("ronin.prodeng-assets.asset")
+        assertThat(ResourceId.fromHeaderOrNull("ronin.prodeng-assets.asset/$id")?.type).isEqualTo("asset")
         assertThat(ResourceId.fromHeaderOrNull("ronin.prodeng-assets.asset/$id")?.id).isEqualTo("ronin-1PEeQK.QWzOjRADXBY0-TdBOkElsK.jQc7huXbQ-ou0Ga")
 
+        assertThrows<IllegalArgumentException> {
+            assertThat(ResourceId.fromHeaderOrNull("asset.$id")).isEqualTo("asset.$id")
+        }
         assertThrows<IllegalArgumentException> {
             ResourceId.fromHeaderOrNull("ronin/prodeng-assets/asset/$id")
         }
