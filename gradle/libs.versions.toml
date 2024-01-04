@@ -8,6 +8,7 @@ kotlinlogging = "3.0.5"
 micrometer = "1.10.4"
 mockk = "1.13.5"
 opentracing = "0.33.0"
+resilience4j = "2.0.2"
 spring = "6.0.11"
 spring-security = "6.0.6"
 
@@ -28,6 +29,10 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 micrometer-statsd = { module = "io.micrometer:micrometer-registry-statsd", version.ref = "micrometer" }
 
 opentracing-util = { module = "io.opentracing:opentracing-util", version.ref = "opentracing" }
+
+resilience4j-kotlin = { module = "io.github.resilience4j:resilience4j-kotlin", version.ref = "resilience4j" }
+resilience4j-micrometer = { module = "io.github.resilience4j:resilience4j-micrometer", version.ref = "resilience4j" }
+resilience4j-retry = { module = "io.github.resilience4j:resilience4j-retry", version.ref = "resilience4j" }
 
 spring-core = { module = "org.springframework:spring-core", version.ref = "spring" }
 spring-context = { module = "org.springframework:spring-context", version.ref = "spring" }
