@@ -8,6 +8,8 @@ dependencies {
     implementation(libs.micrometer.statsd)
     implementation(libs.datadog.api)
     implementation(libs.opentracing.util)
-    implementation(libs.resilience4j.retry)
-    implementation(libs.resilience4j.kotlin)
+    api(libs.resilience4j.retry)
+    api(libs.resilience4j.kotlin)
+    api(libs.resilience4j.micrometer)
+    api(libs.resilience4j.circuitbreaker)
 }
