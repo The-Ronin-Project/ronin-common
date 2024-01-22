@@ -46,5 +46,7 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 [bundles]
 jackson = ["jackson-kotlin", "jackson-datatype-jsr310", "jackson-module-parameterNames"]
+retry = ["resilience4j-kotlin", "resilience4j-retry", "resilience4j-micrometer"]
+circuitbreaker = ["resilience4j-kotlin", "resilience4j-circuitbreaker", "resilience4j-micrometer"]
 
 [plugins]
