@@ -33,6 +33,7 @@ opentracing-util = { module = "io.opentracing:opentracing-util", version.ref = "
 resilience4j-kotlin = { module = "io.github.resilience4j:resilience4j-kotlin", version.ref = "resilience4j" }
 resilience4j-micrometer = { module = "io.github.resilience4j:resilience4j-micrometer", version.ref = "resilience4j" }
 resilience4j-retry = { module = "io.github.resilience4j:resilience4j-retry", version.ref = "resilience4j" }
+resilience4j-circuitbreaker = { module = "io.github.resilience4j:resilience4j-circuitbreaker", version.ref = "resilience4j" }
 
 spring-core = { module = "org.springframework:spring-core", version.ref = "spring" }
 spring-context = { module = "org.springframework:spring-context", version.ref = "spring" }
@@ -45,5 +46,7 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 [bundles]
 jackson = ["jackson-kotlin", "jackson-datatype-jsr310", "jackson-module-parameterNames"]
+retry = ["resilience4j-kotlin", "resilience4j-retry", "resilience4j-micrometer"]
+circuitbreaker = ["resilience4j-kotlin", "resilience4j-circuitbreaker", "resilience4j-micrometer"]
 
 [plugins]
