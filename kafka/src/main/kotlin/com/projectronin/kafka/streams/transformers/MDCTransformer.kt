@@ -22,10 +22,11 @@ class MDCTransformer<K, V> : Transformer<K, V, KeyValue<K, V>> {
     }
 
     override fun transform(key: K?, value: V?): KeyValue<K, V> {
-        context?.apply { MDC.setContextMap(mdc) }
-        if (value is RoninEvent<*>) {
-            context?.apply { (value as RoninEvent<*>).mdc }
-        }
+        val contextMdc = context?.mdc ?: emptyMap()
+        val eventMdc = (value as? RoninEvent<*>)?.mdc ?: emptyMap()
+
+        MDC.setContextMap(contextMdc + eventMdc)
+
         return KeyValue(key, value)
     }
 
