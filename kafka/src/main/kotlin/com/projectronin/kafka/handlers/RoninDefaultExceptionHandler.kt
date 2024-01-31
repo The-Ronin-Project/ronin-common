@@ -15,8 +15,6 @@ class RoninDefaultExceptionHandler : StreamsUncaughtExceptionHandler {
             exception.addToDDTraceSpan()
             return StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.SHUTDOWN_CLIENT
         }
-        logger.error("Some Exception that was not properly handled in the stream. \n$exception")
-        exception?.addToDDTraceSpan()
-        return StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.REPLACE_THREAD
+        return LogAndRestartUncaughtExceptionHandler().handle(exception)
     }
 }
