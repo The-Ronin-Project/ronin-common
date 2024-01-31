@@ -8,11 +8,11 @@ import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 
-class LogAndRestartExceptOnMissingTopicExceptionHandlerTest {
+class RoninDefaultExceptionHandlerTest {
 
     @Test
     fun handleTest() {
-        val handler = LogAndRestartExceptOnMissingTopicExceptionHandler()
+        val handler = RoninDefaultExceptionHandler()
         val missingTopicException = mockk<MissingSourceTopicException>(relaxed = true)
         val exception = mockk<Exception>(relaxed = true)
         val responseShutdown = handler.handle(missingTopicException)

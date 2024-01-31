@@ -1,6 +1,6 @@
 package com.projectronin.kafka.streams
 
-import com.projectronin.kafka.handlers.LogAndRestartUncaughtExceptionHandler
+import com.projectronin.kafka.handlers.RoninDefaultExceptionHandler
 import com.projectronin.kafka.listeners.LogStateListener
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.StreamsConfig
@@ -13,7 +13,7 @@ fun kafkaStreams(topology: Topology, configs: Properties): KafkaStreams {
     }
     val streams = KafkaStreams(topology, StreamsConfig(configs)).apply {
         Runtime.getRuntime().addShutdownHook(Thread(::close, "$applicationId-ShutdownThread"))
-        setUncaughtExceptionHandler(LogAndRestartUncaughtExceptionHandler())
+        setUncaughtExceptionHandler(RoninDefaultExceptionHandler())
         setStateListener(LogStateListener(applicationId))
     }
     return streams

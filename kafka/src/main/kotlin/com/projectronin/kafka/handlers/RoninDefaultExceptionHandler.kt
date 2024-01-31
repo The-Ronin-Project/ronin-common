@@ -6,7 +6,7 @@ import mu.KotlinLogging
 import org.apache.kafka.streams.errors.MissingSourceTopicException
 import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler
 
-class LogAndRestartExceptOnMissingTopicExceptionHandler : StreamsUncaughtExceptionHandler {
+class RoninDefaultExceptionHandler : StreamsUncaughtExceptionHandler {
     private val logger: KLogger = KotlinLogging.logger { }
 
     override fun handle(exception: Throwable?): StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse {
