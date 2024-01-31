@@ -77,6 +77,26 @@ class RoninEventTest {
         assertThat(mdc[Tags.RONIN_EVENT_TYPE_TAG]).isEqualTo("something.create")
         assertThat(mdc[Tags.RONIN_EVENT_VERSION_TAG]).isEqualTo("3")
         assertThat(mdc[Tags.TENANT_TAG]).isEqualTo("apposnd")
+        assertThat(mdc[Tags.RONIN_EVENT_RESOURCE_TYPE_TAG]).isNull()
+        assertThat(mdc[Tags.RONIN_EVENT_RESOURCE_ID_TAG]).isNull()
+    }
+
+    @Test
+    fun `mdc includes resource type and id when resourceId is known`() {
+        val event = RoninEvent<Foo>(
+            version = "3",
+            id = UUID.fromString("350e8400-e29b-41d4-a716-000000000000"),
+            source = "prodeng-assets",
+            dataContentType = "application/json",
+            dataSchema = "http://schemas/asset",
+            type = "something.create",
+            patientId = PatientId("patient123"),
+            tenantId = TenantId("apposnd"),
+            resourceId = ResourceId("Foo", "123")
+        )
+        val mdc = event.mdc
+        assertThat(mdc[Tags.RONIN_EVENT_RESOURCE_TYPE_TAG]).isEqualTo("Foo")
+        assertThat(mdc[Tags.RONIN_EVENT_RESOURCE_ID_TAG]).isEqualTo("123")
     }
 
     @AfterEach

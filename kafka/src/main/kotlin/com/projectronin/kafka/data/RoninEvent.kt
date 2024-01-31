@@ -44,7 +44,9 @@ class RoninEvent<T>(
             Tags.RONIN_EVENT_ID_TAG to id.toString(),
             Tags.RONIN_EVENT_VERSION_TAG to version,
             Tags.RONIN_EVENT_TYPE_TAG to type,
-            Tags.TENANT_TAG to (tenantId?.value)
+            Tags.TENANT_TAG to (tenantId?.value),
+            Tags.RONIN_EVENT_RESOURCE_TYPE_TAG to resourceId?.type,
+            Tags.RONIN_EVENT_RESOURCE_ID_TAG to resourceId?.id
         )
 }
 

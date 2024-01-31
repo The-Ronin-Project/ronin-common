@@ -12,6 +12,8 @@ object Tags {
     const val RONIN_EVENT_SOURCE_TAG = "ronin.event.source"
     const val RONIN_EVENT_TYPE_TAG = "ronin.event.type"
     const val RONIN_EVENT_VERSION_TAG = "ronin.event.version"
+    const val RONIN_EVENT_RESOURCE_TYPE_TAG = "ronin.event.resource.type"
+    const val RONIN_EVENT_RESOURCE_ID_TAG = "ronin.event.resource.id"
 
     const val RONIN_AUTH_IS_AUTHENTICATED = "ronin.auth.is_authenticated"
     const val RONIN_AUTH_USER_TYPE = "ronin.auth.user_type"
