@@ -7,6 +7,9 @@ include(":kafka-test")
 include(":auth")
 include(":auth:auth-m2m-client")
 include(":tenant")
+include(":test-utilities:jwt-auth-test")
+include(":test-utilities:domain-test")
+include(":test-utilities:local-contract-test")
 
 // catalog
 include(":ronin-common-catalog")
