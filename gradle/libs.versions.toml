@@ -1,5 +1,6 @@
 [versions]
 assertj = "3.23.1"
+contract-messaging-tenant-v1 = "1.0.0"
 coroutines = "1.6.4"
 datadog = "1.21.0"
 jackson = "2.15.2"
@@ -13,6 +14,8 @@ spring = "6.0.11"
 spring-security = "6.0.6"
 
 [libraries]
+contract-messaging-tenant-v1 = { module = "com.projectronin.contract.event.tenant:contract-messaging-tenant-v1", version.ref = "contract-messaging-tenant-v1" }
+
 datadog-api = { module = "com.datadoghq:dd-trace-api", version.ref = "datadog" }
 
 jackson-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }

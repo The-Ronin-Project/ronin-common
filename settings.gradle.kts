@@ -6,6 +6,7 @@ include(":kafka")
 include(":kafka-test")
 include(":auth")
 include(":auth:auth-m2m-client")
+include(":tenant")
 
 // catalog
 include(":ronin-common-catalog")
