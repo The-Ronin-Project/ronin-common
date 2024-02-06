@@ -4,12 +4,11 @@ plugins {
 
 dependencies {
     api(project(":kafka"))
+    api(libs.contract.messaging.tenant.v1)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.bundles.jackson)
-    implementation(libs.contract.messaging.tenant.v1)
-    api(libs.kafka.clients)
-    api(libs.kafka.streams)
-    api(libs.kafka.streams.test.utils)
+    implementation(libs.kafka.streams)
+    implementation(libs.kafka.streams.test.utils)
     implementation(libs.kotlin.logging)
 
     implementation(libs.datadog.api)
