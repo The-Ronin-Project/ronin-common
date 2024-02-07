@@ -13,6 +13,7 @@ dependencies {
     api(libs.wiremock)
     api(project(":kafka-test"))
     api(libs.bundles.retry)
+    api(project(":test-utilities:jwt-auth-test"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlin.logging)
@@ -28,7 +29,7 @@ dependencies {
     implementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
     implementation("com.hazelcast:hazelcast:5.3.6")
     implementation(project(":common"))
-    api(project(":test-utilities:jwt-auth-test"))
+    implementation("io.github.classgraph:classgraph:4.8.165")
 
     compileOnly("org.jetbrains:annotations:24.1.0")
 
