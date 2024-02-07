@@ -49,7 +49,7 @@ import com.nimbusds.jose.jwk.RSAKey
 fun createMockAuthServer(
     jwks: JWKSet,
     issueRootUri: String,
-    issuerPath: String = "",
+    issuerPath: String = ""
 ): List<StubMapping> {
     val mappings = mutableListOf<StubMapping>()
 
@@ -101,7 +101,7 @@ fun createMockAuthServer(
                         "openid"
                     ]
                 }
-            """.trimIndent()
+    """.trimIndent()
 
     mappings += stubFor(
         get(urlPathMatching("$issuerPath/oauth2/jwks"))
@@ -197,7 +197,7 @@ fun <T> withAuthWiremockServer(
     rsaKey: RSAKey,
     issueRootUri: String,
     issuerPath: String = "",
-    block: WireMockServerContext.() -> T,
+    block: WireMockServerContext.() -> T
 ): T {
     return WireMockServerContext(rsaKey, issueRootUri, issuerPath).use { block(it) }
 }

@@ -74,7 +74,7 @@ fun defaultRoninClaims(
             tenantId = tenantId,
             id = providerFhirId
         )
-    ),
+    )
 ): RoninClaims {
     return RoninClaims(
         user = RoninUser(
