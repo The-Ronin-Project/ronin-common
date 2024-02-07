@@ -29,7 +29,7 @@ import java.util.Date
  * }
  * ```
  */
-fun generateToken(rsaKey: RSAKey, issuer: String, claimSetCustomizer: (JWTClaimsSet.Builder) -> JWTClaimsSet.Builder = { it }): String {
+fun generateToken(rsaKey: RSAKey, issuer: String, claimSetCustomizer: JWTClaimsSet.Builder.() -> JWTClaimsSet.Builder = { this }): String {
     val signedJWT = SignedJWT(
         JWSHeader.Builder(JWSAlgorithm.RS256).keyID(rsaKey.keyID).build(),
         claimSetCustomizer(
@@ -59,7 +59,7 @@ fun defaultRoninClaims(
     patientUdpId: String? = "apposnd-231982009",
     patientFhirId: String? = "231982009",
     providerUdpId: String? = "apposnd-eSC7e62xM4tbHbRbARd1o0kw3",
-    providerFhirId: String? = "231982009",
+    providerFhirId: String? = "eSC7e62xM4tbHbRbARd1o0kw3",
     preferredTimeZone: String? = "America/Los_Angeles",
     identities: List<RoninUserIdentity> = listOf(
         RoninUserIdentity(
@@ -122,8 +122,8 @@ fun JWTClaimsSet.Builder.roninClaim(claims: RoninClaims) = apply {
  * }
  * ```
  */
-fun jwtAuthToken(rsaKey: RSAKey, issuer: String, block: RoninWireMockAuthenticationContext.() -> Unit = {}): String {
-    val ctx = RoninWireMockAuthenticationContext(rsaKey, issuer, defaultRoninClaims().user!!)
+fun jwtAuthToken(rsaKey: RSAKey, issuer: String, block: RoninTokenBuilderContext.() -> Unit = {}): String {
+    val ctx = RoninTokenBuilderContext(rsaKey, issuer, defaultRoninClaims().user!!)
     block(ctx)
     return ctx.buildToken()
 }
@@ -131,7 +131,7 @@ fun jwtAuthToken(rsaKey: RSAKey, issuer: String, block: RoninWireMockAuthenticat
 /**
  * Internally used for the customization blocks in functions like `jwtAuthToken()`
  */
-class RoninWireMockAuthenticationContext(rsaKey: RSAKey, issuer: String, roninUser: RoninUser) {
+class RoninTokenBuilderContext(rsaKey: RSAKey, val issuer: String, roninUser: RoninUser) {
 
     private var id: String = roninUser.id
     private var userType: RoninUserType = roninUser.userType
@@ -140,13 +140,15 @@ class RoninWireMockAuthenticationContext(rsaKey: RSAKey, issuer: String, roninUs
     private var loginProfile: RoninLoginProfile? = roninUser.loginProfile
     private var identities: MutableList<RoninUserIdentity> = roninUser.identities.toMutableList()
     private var authenticationSchemes: MutableList<RoninAuthenticationScheme> = roninUser.authenticationSchemes.toMutableList()
-    private var customizer: JWTClaimsSet.Builder.() -> JWTClaimsSet.Builder = { this }
     private var _rsaKey: RSAKey = rsaKey
-    private var _issuer: String = issuer
-    private var subject: String = "alice"
-    private var issuedAt: Date = Date()
 
-    private var defaultClaims: Map<String, Any?> = mapOf()
+    private val scopes = mutableListOf<String>()
+    private var builderCustomizers = mutableListOf<JWTClaimsSet.Builder.() -> JWTClaimsSet.Builder>(
+        {
+            subject("alice")
+                .run { scopes.takeIf { it.isNotEmpty() }?.let { claim("scope", it.toList()) } ?: this }
+        }
+    )
 
     /**
      * Builds the token and serializes it.
@@ -165,22 +167,18 @@ class RoninWireMockAuthenticationContext(rsaKey: RSAKey, issuer: String, roninUs
         )
         return generateToken(
             rsaKey = _rsaKey,
-            issuer = _issuer
+            issuer = issuer
         ) {
-            customizer(
-                defaultClaims.entries.fold(it) { builder, entry ->
-                    builder.claim(entry.key, entry.value)
-                }
-                    .roninClaim(roninClaims)
-                    .issueTime(issuedAt)
-            )
+            builderCustomizers.fold(roninClaim(roninClaims)) { builder, block ->
+                block(builder)
+            }
         }
     }
 
     /**
      * Changes the RSA key that's being used.
      */
-    fun withRsaKey(rsaKey: RSAKey): RoninWireMockAuthenticationContext {
+    fun withRsaKey(rsaKey: RSAKey): RoninTokenBuilderContext {
         this._rsaKey = rsaKey
         return this
     }
@@ -188,47 +186,54 @@ class RoninWireMockAuthenticationContext(rsaKey: RSAKey, issuer: String, roninUs
     /**
      * Sets the list of scopes.
      */
-    fun withScopes(vararg scope: String): RoninWireMockAuthenticationContext = withClaim("scope", scope.toList())
+    fun withoutScopes(): RoninTokenBuilderContext {
+        scopes.clear()
+        return this
+    }
 
     /**
      * Adds new scopes to the list of existing scopes.  Creates a new list if necessary.
      */
-    @Suppress("UNCHECKED_CAST")
-    fun addScopes(vararg scope: String): RoninWireMockAuthenticationContext = withClaim("scope", (defaultClaims["scope"]?.let { it as List<String> } ?: emptyList()) + scope.toList())
+    fun withScopes(vararg scope: String): RoninTokenBuilderContext {
+        scopes += scope
+        return this
+    }
 
     /**
      * Changes the `iss` issuer field of the token
      */
-    fun withIssuer(issuer: String): RoninWireMockAuthenticationContext {
-        this._issuer = issuer
-        return this
-    }
+    fun withIssuer(issuer: String): RoninTokenBuilderContext = withTokenCustomizer { issuer(issuer) }
 
     /**
      * Sets the `sub` field of the token
      */
-    fun withSubject(subject: String): RoninWireMockAuthenticationContext {
-        this.subject = subject
-        return this
-    }
+    fun withSubject(subject: String): RoninTokenBuilderContext = withTokenCustomizer { subject(subject) }
 
     /**
      * Sets the `iat` field of the token to the given date.
      */
-    fun withIat(issuedAt: Date): RoninWireMockAuthenticationContext {
-        this.issuedAt = issuedAt
-        return this
-    }
+    fun withIat(issuedAt: Date): RoninTokenBuilderContext = withIssueTime(issuedAt)
+
+    fun withIssueTime(issuedAt: Date): RoninTokenBuilderContext = withTokenCustomizer { issueTime(issuedAt) }
+
+    /**
+     * Sets the `exp` field of the token to the given date.
+     */
+    fun withExpirationTime(expirationTime: Date): RoninTokenBuilderContext = withTokenCustomizer { expirationTime(expirationTime) }
 
     /**
      * Sets the `aud` field of the token to the given date
      */
-    fun withAudience(aud: String): RoninWireMockAuthenticationContext = withClaim("aud", aud)
+    fun withAudience(vararg aud: String): RoninTokenBuilderContext = withTokenCustomizer { audience(aud.toList()) }
+
+    fun withNotBeforeTime(nbf: Date): RoninTokenBuilderContext = withTokenCustomizer { notBeforeTime(nbf) }
+
+    fun withJwtID(jwtId: String): RoninTokenBuilderContext = withTokenCustomizer { jwtID(jwtId) }
 
     /**
      * Sets the user id value of the ronin claims
      */
-    fun withUserId(id: String): RoninWireMockAuthenticationContext {
+    fun withUserId(id: String): RoninTokenBuilderContext {
         this.id = id
         return this
     }
@@ -236,7 +241,7 @@ class RoninWireMockAuthenticationContext(rsaKey: RSAKey, issuer: String, roninUs
     /**
      * Sets the user type value of the ronin claims
      */
-    fun withUserType(userType: RoninUserType): RoninWireMockAuthenticationContext {
+    fun withUserType(userType: RoninUserType): RoninTokenBuilderContext {
         this.userType = userType
         return this
     }
@@ -244,7 +249,7 @@ class RoninWireMockAuthenticationContext(rsaKey: RSAKey, issuer: String, roninUs
     /**
      * Sets the name field of the ronin claims
      */
-    fun withName(name: RoninName?): RoninWireMockAuthenticationContext {
+    fun withName(name: RoninName?): RoninTokenBuilderContext {
         this.name = name
         return this
     }
@@ -252,7 +257,7 @@ class RoninWireMockAuthenticationContext(rsaKey: RSAKey, issuer: String, roninUs
     /**
      * Sets the preferred time zone of the ronin claims
      */
-    fun withPreferredTimeZone(preferredTimeZone: String?): RoninWireMockAuthenticationContext {
+    fun withPreferredTimeZone(preferredTimeZone: String?): RoninTokenBuilderContext {
         this.preferredTimeZone = preferredTimeZone
         return this
     }
@@ -267,17 +272,19 @@ class RoninWireMockAuthenticationContext(rsaKey: RSAKey, issuer: String, roninUs
      * }
      * ```
      */
-    fun withLoginProfile(loginProfile: RoninLoginProfile? = null, block: RoninLoginProfileContext.() -> Unit = {}): RoninWireMockAuthenticationContext {
+    fun withLoginProfile(loginProfile: RoninLoginProfile? = null, block: RoninLoginProfileContext.() -> Unit = {}): RoninTokenBuilderContext {
         val ctx = RoninLoginProfileContext(loginProfile)
         block(ctx)
         this.loginProfile = ctx.build()
         return this
     }
 
+    fun withUpdatedLoginProfile(block: RoninLoginProfileContext.() -> Unit = {}): RoninTokenBuilderContext = withLoginProfile(loginProfile, block)
+
     /**
      * Clears the list of identities
      */
-    fun withoutIdentities(): RoninWireMockAuthenticationContext {
+    fun withoutIdentities(): RoninTokenBuilderContext {
         this.identities.clear()
         return this
     }
@@ -285,7 +292,7 @@ class RoninWireMockAuthenticationContext(rsaKey: RSAKey, issuer: String, roninUs
     /**
      * Adds identities to the user identity list.
      */
-    fun withIdentities(vararg identities: RoninUserIdentity): RoninWireMockAuthenticationContext {
+    fun withIdentities(vararg identities: RoninUserIdentity): RoninTokenBuilderContext {
         this.identities += identities
         return this
     }
@@ -293,7 +300,7 @@ class RoninWireMockAuthenticationContext(rsaKey: RSAKey, issuer: String, roninUs
     /**
      * Clears the authentication schemes list
      */
-    fun withoutAuthenticationSchemes(): RoninWireMockAuthenticationContext {
+    fun withoutAuthenticationSchemes(): RoninTokenBuilderContext {
         this.authenticationSchemes.clear()
         return this
     }
@@ -301,25 +308,22 @@ class RoninWireMockAuthenticationContext(rsaKey: RSAKey, issuer: String, roninUs
     /**
      * Adds new authentication schemes
      */
-    fun withAuthenticationSchemes(vararg authenticationSchemes: RoninAuthenticationScheme): RoninWireMockAuthenticationContext {
+    fun withAuthenticationSchemes(vararg authenticationSchemes: RoninAuthenticationScheme): RoninTokenBuilderContext {
         this.authenticationSchemes += authenticationSchemes
-        return this
-    }
-
-    /**
-     * Sets a function that will be used to directly manipulate the claimset builder after everything else has been
-     * added but before the final token is built.
-     */
-    fun withTokenCustomizer(fn: JWTClaimsSet.Builder.() -> JWTClaimsSet.Builder): RoninWireMockAuthenticationContext {
-        customizer = fn
         return this
     }
 
     /**
      * Adds an arbitrary claim field to the token.
      */
-    fun withClaim(key: String, value: Any?): RoninWireMockAuthenticationContext {
-        defaultClaims = defaultClaims + (key to value)
+    fun withClaim(key: String, value: Any?): RoninTokenBuilderContext = withTokenCustomizer { claim(key, value) }
+
+    /**
+     * Sets a function that will be used to directly manipulate the claimset builder after everything else has been
+     * added but before the final token is built.
+     */
+    fun withTokenCustomizer(fn: JWTClaimsSet.Builder.() -> JWTClaimsSet.Builder): RoninTokenBuilderContext {
+        builderCustomizers += fn
         return this
     }
 }

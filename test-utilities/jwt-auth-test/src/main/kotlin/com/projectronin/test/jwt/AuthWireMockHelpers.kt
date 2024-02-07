@@ -224,7 +224,7 @@ class WireMockServerContext(val rsaKey: RSAKey, val issueRootUri: String, val is
      * }
      * ```
      */
-    fun jwtAuthToken(rsaKey: RSAKey = this.rsaKey, issuer: String = "${this.issueRootUri}$issuerPath", block: RoninWireMockAuthenticationContext.() -> Unit = {}): String {
+    fun jwtAuthToken(rsaKey: RSAKey = this.rsaKey, issuer: String = "${this.issueRootUri}$issuerPath", block: RoninTokenBuilderContext.() -> Unit = {}): String {
         return com.projectronin.test.jwt.jwtAuthToken(rsaKey, issuer, block)
     }
 
@@ -234,6 +234,10 @@ class WireMockServerContext(val rsaKey: RSAKey, val issueRootUri: String, val is
     fun withAnotherSever(rsaKey: RSAKey, issueRootUri: String, issuerPath: String): WireMockServerContext {
         stubs += createMockAuthServer(createJWKS(rsaKey), issueRootUri, issuerPath)
         return this
+    }
+
+    fun withM2MTokenProvider(token: String, issuerPath: String = "", scope: List<String> = emptyList(), bodyMatcher: ContentPattern<*>? = null) {
+        stubs += createM2MTokenProvider(token, issuerPath, scope, bodyMatcher)
     }
 
     override fun close() {

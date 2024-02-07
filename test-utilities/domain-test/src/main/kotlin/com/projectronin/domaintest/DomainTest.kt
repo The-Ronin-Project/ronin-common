@@ -7,7 +7,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.hazelcast.client.HazelcastClient
 import com.hazelcast.client.config.ClientConfig
 import com.nimbusds.jose.jwk.RSAKey
-import com.projectronin.test.jwt.RoninWireMockAuthenticationContext
+import com.projectronin.test.jwt.RoninTokenBuilderContext
 import com.projectronin.test.jwt.generateRandomRsa
 import mu.KLogger
 import mu.KotlinLogging
@@ -146,7 +146,7 @@ class DomainTestContext : AutoCloseable {
      *       - http://127.0.0.1:{{wireMockPort}}
      * ```
      */
-    fun jwtAuthToken(block: RoninWireMockAuthenticationContext.() -> Unit = {}): String {
+    fun jwtAuthToken(block: RoninTokenBuilderContext.() -> Unit = {}): String {
         return com.projectronin.test.jwt.jwtAuthToken(authServiceRsaKey, authServiceIssuer()) {
             block(this)
         }
