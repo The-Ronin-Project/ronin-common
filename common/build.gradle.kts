@@ -10,4 +10,5 @@ dependencies {
     implementation(libs.opentracing.util)
     implementation(libs.resilience4j.retry)
     implementation(libs.resilience4j.kotlin)
+    testImplementation(libs.mockk)
 }

@@ -1,7 +1,7 @@
 package com.projectronin.kafka.spring.config
 
+import com.projectronin.common.metrics.RoninMetrics
 import com.projectronin.kafka.config.ClusterProperties
-import com.projectronin.kafka.handlers.DeadLetterProducer
 import io.micrometer.core.instrument.MeterRegistry
 import org.apache.kafka.common.security.auth.SecurityProtocol
 import org.springframework.beans.factory.annotation.Value
@@ -38,6 +38,6 @@ open class KafkaConfiguration : ApplicationContextAware {
     }
 
     override fun setApplicationContext(applicationContext: ApplicationContext) {
-        DeadLetterProducer.meterRegistry = applicationContext.getBean(MeterRegistry::class.java)
+        RoninMetrics.setRegistry(applicationContext.getBean(MeterRegistry::class.java))
     }
 }

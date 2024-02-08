@@ -1,12 +1,14 @@
 package com.projectronin.kafka.clients
 
 import com.projectronin.common.ResourceId
+import com.projectronin.common.metrics.RoninMetrics
 import com.projectronin.kafka.clients.MeteredProducer.Metrics.FLUSH_TIMER
 import com.projectronin.kafka.clients.MeteredProducer.Metrics.SEND_TIMER
 import com.projectronin.kafka.data.RoninEvent
 import io.micrometer.core.instrument.MeterRegistry
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -18,6 +20,7 @@ import org.apache.kafka.clients.producer.RecordMetadata
 import org.apache.kafka.common.serialization.Serializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.CompletableFuture
@@ -35,10 +38,16 @@ class MeteredProducerTest {
     )
     private val record = ProducerRecord("test.topic", null, "foo/17", event)
 
+    @BeforeEach
+    fun setup() {
+        mockkObject(RoninMetrics)
+        every { RoninMetrics.registryOrNull() } returns (meterRegistry)
+    }
+
     @Test
     fun `flush is metered and calls producer flush`() {
         val mockProducer = mockk<Producer<String, RoninEvent<Foo>>>(relaxed = true)
-        val producer = MeteredProducer(mockProducer, meterRegistry)
+        val producer = MeteredProducer(mockProducer)
         producer.flush()
         verify(exactly = 1) { mockProducer.flush() }
         verify(exactly = 1) { meterRegistry.timer(FLUSH_TIMER) }
@@ -46,6 +55,7 @@ class MeteredProducerTest {
 
     @Test
     fun `flush calls producer flush with no meter registry`() {
+        every { RoninMetrics.registryOrNull() } returns (null)
         val mockProducer = mockk<Producer<String, RoninEvent<Foo>>>(relaxed = true)
         val producer: MeteredProducer<String, RoninEvent<Foo>> = MeteredProducer(mockProducer)
         producer.flush()
@@ -59,7 +69,7 @@ class MeteredProducerTest {
             StringSerializer(),
             Serializer<RoninEvent<Foo>> { _, _ -> "_".toByteArray() }
         )
-        val producer = MeteredProducer(mockProducer, meterRegistry)
+        val producer = MeteredProducer(mockProducer)
 
         producer.send(record)
 
@@ -80,7 +90,7 @@ class MeteredProducerTest {
     @Test
     fun `send failure with metrics no callback`() {
         val mockProducer = mockk<Producer<String, RoninEvent<Foo>>>(relaxed = true)
-        val producer = MeteredProducer(mockProducer, meterRegistry)
+        val producer = MeteredProducer(mockProducer)
 
         val metadata = mockk<RecordMetadata>()
         every { mockProducer.send(any(), any()) } answers {
@@ -109,7 +119,7 @@ class MeteredProducerTest {
             StringSerializer(),
             Serializer<RoninEvent<Foo>> { _, _ -> "_".toByteArray() }
         )
-        val producer = MeteredProducer(mockProducer, meterRegistry)
+        val producer = MeteredProducer(mockProducer)
 
         var metadata: RecordMetadata? = null
         producer.send(record) { m, _ -> metadata = m }
@@ -132,7 +142,7 @@ class MeteredProducerTest {
     @Test
     fun `send failure with metrics with callback`() {
         val mockProducer = mockk<Producer<String, RoninEvent<Foo>>>(relaxed = true)
-        val producer = MeteredProducer(mockProducer, meterRegistry)
+        val producer = MeteredProducer(mockProducer)
 
         val metadata = mockk<RecordMetadata>()
         every { mockProducer.send(any(), any()) } answers {
@@ -165,7 +175,7 @@ class MeteredProducerTest {
             StringSerializer(),
             Serializer<RoninEvent<Foo>> { _, _ -> "_".toByteArray() }
         )
-        val producer = MeteredProducer(mockProducer, meterRegistry)
+        val producer = MeteredProducer(mockProducer)
 
         producer.asyncSend(record)
 
@@ -189,7 +199,7 @@ class MeteredProducerTest {
         val runtimeException = RuntimeException("Boom")
         runTest {
             val mockProducer = mockk<Producer<String, RoninEvent<Foo>>>(relaxed = true)
-            val producer = MeteredProducer(mockProducer, meterRegistry)
+            val producer = MeteredProducer(mockProducer)
 
             val metadata = mockk<RecordMetadata>()
             every { mockProducer.send(any(), any()) } answers {

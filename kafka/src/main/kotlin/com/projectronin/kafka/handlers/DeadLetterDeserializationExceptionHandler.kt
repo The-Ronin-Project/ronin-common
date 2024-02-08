@@ -1,5 +1,6 @@
 package com.projectronin.kafka.handlers
 
+import com.projectronin.common.metrics.RoninMetrics
 import com.projectronin.common.telemetry.addToDDTraceSpan
 import com.projectronin.kafka.exceptions.ConfigurationException
 import mu.KotlinLogging
@@ -18,6 +19,10 @@ class DeadLetterDeserializationExceptionHandler : DeserializationExceptionHandle
         DeadLetterProducer.producer(configs)
     }
 
+    object Metrics {
+        const val DESERIALIZATION_EXCEPTION_METER = "roninkafka.deserialization.exception"
+    }
+
     companion object {
         const val DEAD_LETTER_TOPIC_CONFIG = "ronin.dead.letter.topic"
     }
@@ -32,15 +37,23 @@ class DeadLetterDeserializationExceptionHandler : DeserializationExceptionHandle
     }
 
     override fun handle(
-        context: ProcessorContext?,
+        context: ProcessorContext,
         record: ConsumerRecord<ByteArray, ByteArray>,
         exception: Exception?
     ): DeserializationExceptionHandler.DeserializationHandlerResponse {
         exception?.let {
+            it.addToDDTraceSpan()
             logger.warn(
                 "Exception Deserializing Message from" +
                     " ${record.topic()}-${record.partition()}@${record.offset()}. " +
                     "Failed with exception ${exception.message}. Sending to DLQ"
+            )
+            RoninMetrics.registryOrNull()?.counter(
+                Metrics.DESERIALIZATION_EXCEPTION_METER,
+                "topic", context.topic(),
+                "partition", context.partition().toString(),
+                "offset", context.offset().toString(),
+                "message", it.message
             )
         }
         producer.send(

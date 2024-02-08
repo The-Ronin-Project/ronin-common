@@ -1,11 +1,11 @@
 package com.projectronin.kafka.clients
 
+import com.projectronin.common.metrics.RoninMetrics
 import com.projectronin.common.metrics.record
 import com.projectronin.common.telemetry.Tags.KAFKA_OFFSET_TAG
 import com.projectronin.common.telemetry.Tags.KAFKA_PARTITION_TAG
 import com.projectronin.common.telemetry.Tags.KAFKA_TOPIC_TAG
 import com.projectronin.common.telemetry.addToDDTraceSpan
-import io.micrometer.core.instrument.MeterRegistry
 import mu.KLogger
 import mu.KotlinLogging
 import mu.withLoggingContext
@@ -22,7 +22,7 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 
 @OptIn(ExperimentalTime::class)
-class MeteredProducer<K, V>(val producer: Producer<K, V>, private val meterRegistry: MeterRegistry? = null) :
+class MeteredProducer<K, V>(val producer: Producer<K, V>) :
     Producer<K, V> by producer {
 
     private val logger: KLogger = KotlinLogging.logger { }
@@ -64,15 +64,14 @@ class MeteredProducer<K, V>(val producer: Producer<K, V>, private val meterRegis
                     }
                 }
 
-            meterRegistry?.apply {
-                timer(
-                    Metrics.SEND_TIMER,
-                    "success",
-                    success,
-                    "topic",
-                    topic
-                ).record(startMark.elapsedNow())
-            }
+            RoninMetrics.registryOrNull()?.timer(
+                Metrics.SEND_TIMER,
+                "success",
+                success,
+                "topic",
+                topic
+            )?.record(startMark.elapsedNow())
+
             callback.onCompletion(metadata, exception)
         }
     }
@@ -81,7 +80,7 @@ class MeteredProducer<K, V>(val producer: Producer<K, V>, private val meterRegis
         val timeTaken = timeSource.measureTime {
             producer.flush()
         }
-        meterRegistry?.timer(Metrics.FLUSH_TIMER)?.record(timeTaken)
+        RoninMetrics.registryOrNull()?.timer(Metrics.FLUSH_TIMER)?.record(timeTaken)
     }
 }
 
