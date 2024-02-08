@@ -30,7 +30,7 @@ class ProductEngineeringServiceContext internal constructor(
         get() = _dependencies.toSet()
 
     // language=yaml
-    private var _configYaml: String =
+    private var _configYaml: String? =
         """
         spring:
           config:
@@ -55,6 +55,10 @@ class ProductEngineeringServiceContext internal constructor(
         _configYaml = yaml
     }
 
+    fun withoutConfigYaml() {
+        _configYaml = null
+    }
+
     fun extraConfiguration(block: GenericContainer<*>.() -> GenericContainer<*>) {
         extraConfig += block
     }
@@ -64,7 +68,7 @@ class ProductEngineeringServiceContext internal constructor(
     }
 
     fun dependsOnMySQLDatabase(dbName: String, username: String = dbName, password: String = dbName) {
-        _dependencies += DomainTestSetupContext.mysqlContainerName
+        dependsOnMySQL()
         MySQLServiceContext.instance.withDatabase(dbName, username, password)
     }
 
@@ -77,18 +81,18 @@ class ProductEngineeringServiceContext internal constructor(
         _dependencies += DomainTestSetupContext.wiremockContainerName
     }
 
-    private fun writeConfigYaml() {
-        serviceYamlFile.writeText(_configYaml)
-    }
-
     override fun createContainer(): GenericContainer<*> {
-        writeConfigYaml()
+        _configYaml?.let { serviceYamlFile.writeText(it) }
         return GenericContainer(DockerImageName.parse("docker-proxy.devops.projectronin.io/$imageName:$version"))
             .withNetwork(network)
             .withNetworkAliases(serviceName)
-            .withEnv("SPRING_CONFIG_LOCATION", "/domaintest/config.yml")
             .withEnv("SPRING_PROFILES_ACTIVE", "local,domaintest")
-            .withCopyToContainer(Transferable.of(_configYaml), "/domaintest/config.yml")
+            .run {
+                _configYaml?.let { cfg ->
+                    withEnv("SPRING_CONFIG_LOCATION", "/domaintest/config.yml")
+                        .withCopyToContainer(Transferable.of(cfg), "/domaintest/config.yml")
+                } ?: this
+            }
             .withExposedPorts(8080)
             .waitingFor(LogMessageWaitStrategy().withRegEx(".*Started .* in .* seconds.*"))
             .withStartupTimeout(Duration.parse("PT5M"))
@@ -104,5 +108,9 @@ class ProductEngineeringServiceContext internal constructor(
 fun externalUriFor(serviceName: String): String =
     ProductEngineeringServiceContext.serviceMap[serviceName]?.let { "http://localhost:${it.getMappedPort(8080)}" } ?: throw IllegalStateException("No started service named $serviceName")
 
+fun externalUriFor(service: ServiceDef): String = externalUriFor(service.serviceName)
+
 fun exposedServicePort(serviceName: String, port: Int): Int =
     ProductEngineeringServiceContext.serviceMap[serviceName]?.getMappedPort(port) ?: throw IllegalStateException("No started service named $serviceName")
+
+fun exposedServicePort(service: ServiceDef, port: Int): Int = exposedServicePort(service.serviceName, port)

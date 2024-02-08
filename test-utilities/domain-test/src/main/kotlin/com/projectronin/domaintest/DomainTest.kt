@@ -53,21 +53,19 @@ class DomainTestContext : AutoCloseable {
 
     private var _objectMapper: ObjectMapper? = null
 
-    val authServiceName = "auth"
-
     val mockRsaKey: RSAKey by lazy { WireMockServiceContext.instance.rsaKey }
 
     val authServiceRsaKey: RSAKey by lazy {
 
         // this forces auth to instantiate the jwks, which is lazily created
         request {
-            serviceGet(authServiceName, "/oauth2/jwks")
+            serviceGet(KnownServices.Auth.serviceName, "/oauth2/jwks")
         }.execute { }
 
         val clientConfig = ClientConfig()
         clientConfig.clusterName = "spring-session-cluster"
         clientConfig.setProperty("hazelcast.logging.type", "slf4j")
-        clientConfig.networkConfig.addAddress("localhost:${exposedServicePort(authServiceName, 5701)}")
+        clientConfig.networkConfig.addAddress("localhost:${exposedServicePort(KnownServices.Auth, 5701)}")
 
         val client = HazelcastClient.newHazelcastClient(clientConfig)
 
@@ -79,7 +77,7 @@ class DomainTestContext : AutoCloseable {
     }
 
     val rsaKey: RSAKey by lazy {
-        if (ProductEngineeringServiceContext.serviceMap[authServiceName] != null) {
+        if (ProductEngineeringServiceContext.serviceMap[KnownServices.Auth.serviceName] != null) {
             authServiceRsaKey
         } else {
             mockRsaKey
@@ -87,7 +85,7 @@ class DomainTestContext : AutoCloseable {
     }
 
     val issuer: String by lazy {
-        if (ProductEngineeringServiceContext.serviceMap[authServiceName] != null) {
+        if (ProductEngineeringServiceContext.serviceMap[KnownServices.Auth.serviceName] != null) {
             authServiceIssuer()
         } else {
             oidcIssuer()
@@ -136,8 +134,29 @@ class DomainTestContext : AutoCloseable {
         _httpClient = null
     }
 
-    fun request(serviceName: String? = null, path: String = "", block: RequestContext.() -> Unit = {}): RequestContext {
-        val requestContext = RequestContext(serviceName, path)
+    fun request(service: ServiceDef, path: String = "", block: RequestContext.() -> Unit = {}): RequestContext {
+        val requestContext = RequestContext()
+        requestContext.serviceGet(service, path)
+        block(requestContext)
+        return requestContext
+    }
+
+    fun request(serviceName: String, path: String = "", block: RequestContext.() -> Unit = {}): RequestContext {
+        val requestContext = RequestContext()
+        requestContext.serviceGet(serviceName, path)
+        block(requestContext)
+        return requestContext
+    }
+
+    fun request(block: RequestContext.() -> Unit = {}): RequestContext {
+        val requestContext = RequestContext()
+        block(requestContext)
+        return requestContext
+    }
+
+    fun gatewayRequest(path: String, block: RequestContext.() -> Unit = {}): RequestContext {
+        val requestContext = RequestContext()
+        requestContext.serviceGet(KnownServices.Gateway, path)
         block(requestContext)
         return requestContext
     }
@@ -386,17 +405,21 @@ class DomainTestContext : AutoCloseable {
         fun chainRedirects(label: String = "Initial request", expectedStatus: Int = HttpURLConnection.HTTP_MOVED_TEMP, verifier: (Response) -> Unit): RedirectContext
     }
 
-    inner class RequestContext(serviceName: String? = null, path: String = "") : RequestExecutor {
+    inner class RequestContext : RequestExecutor {
         var builder: Request.Builder = Request.Builder()
-
-        init {
-            if (serviceName != null) {
-                serviceGet(serviceName, path)
-            }
-        }
 
         fun serviceGet(serviceName: String, path: String = ""): RequestContext {
             get("${externalUriFor(serviceName)}$path")
+            return this
+        }
+
+        fun serviceGet(service: ServiceDef, path: String = ""): RequestContext {
+            get("${externalUriFor(service)}$path")
+            return this
+        }
+
+        fun gatewayGet(path: String): RequestContext {
+            get("${externalUriFor(KnownServices.Gateway)}$path")
             return this
         }
 
@@ -409,6 +432,16 @@ class DomainTestContext : AutoCloseable {
 
         fun servicePost(serviceName: String, path: String = "", body: RequestBody): RequestContext {
             post("${externalUriFor(serviceName)}$path", body)
+            return this
+        }
+
+        fun servicePost(service: ServiceDef, path: String = "", body: RequestBody): RequestContext {
+            post("${externalUriFor(service)}$path", body)
+            return this
+        }
+
+        fun gatewayPost(path: String, body: RequestBody): RequestContext {
+            post("${externalUriFor(KnownServices.Gateway)}$path", body)
             return this
         }
 

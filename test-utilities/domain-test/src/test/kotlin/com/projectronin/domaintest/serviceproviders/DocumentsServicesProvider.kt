@@ -2,6 +2,7 @@ package com.projectronin.domaintest.serviceproviders
 
 import com.projectronin.domaintest.DomainTestServicesProvider
 import com.projectronin.domaintest.DomainTestSetupContext
+import com.projectronin.domaintest.KnownServices
 import com.projectronin.domaintest.internalJdbcUrlFor
 import com.projectronin.domaintest.internalOidcIssuer
 import com.projectronin.domaintest.kafkaInternalBootstrapServers
@@ -32,7 +33,8 @@ class DocumentsServicesProvider : DomainTestServicesProvider {
                 withM2MSupport()
             }
             withAuth("1.0.39")
-            withProductEngineeringService("document-api", "document-api-service", "2.0.16") {
+            withGateway("1.0.25")
+            withProductEngineeringService(KnownServices.DocumentApi, "2.0.16") {
                 dependsOnMySQLDatabase("document_api")
                 dependsOnKafka(
                     documentEventsTopic,
@@ -71,7 +73,7 @@ class DocumentsServicesProvider : DomainTestServicesProvider {
                     """.trimIndent()
                 )
             }
-            withProductEngineeringService("document-data", "document-data-service", "2.0.12") {
+            withProductEngineeringService(KnownServices.DocumentData, "2.0.12") {
                 dependsOnMySQLDatabase("document_data")
                 dependsOnKafka(
                     assetsEventTopic,
@@ -116,7 +118,7 @@ class DocumentsServicesProvider : DomainTestServicesProvider {
                     """.trimIndent()
                 )
             }
-            withProductEngineeringService("assets", "assets-service", "2.0.12") {
+            withProductEngineeringService(KnownServices.Assets, "2.0.12") {
                 dependsOnMySQLDatabase("assets")
                 dependsOnKafka(
                     assetsCommandTopic,

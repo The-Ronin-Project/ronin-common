@@ -77,8 +77,7 @@ class DomainTestTest {
     @Test
     fun `should execute and verify a bad request missing field`() = domainTest {
         val badRequest = request()
-            .servicePost(
-                serviceName = "assets",
+            .gatewayPost(
                 path = "/api/v1/tenants/apposnd/patients/apposnd-94xNAMvgsMWzJAh8vEhR9vSioXkGn5/assets",
                 body = requestBody(
                     AssetSchema().apply {
@@ -111,7 +110,7 @@ class DomainTestTest {
     fun `should execute and verify a bad request invalid field value`() = domainTest {
         val badRequest = request()
             .servicePost(
-                serviceName = "assets",
+                service = KnownServices.Assets,
                 path = "/api/v1/tenants/apposnd/patients/apposnd-94xNAMvgsMWzJAh8vEhR9vSioXkGn5/assets",
                 body = """
                     {

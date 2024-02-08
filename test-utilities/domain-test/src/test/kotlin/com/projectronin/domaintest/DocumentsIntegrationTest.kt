@@ -168,7 +168,7 @@ class DocumentsIntegrationTest {
         }
 
         val assetId: UUID = retryAssertion(240, Duration.ofMillis(500)) {
-            val assetPath = request("document-api", "/api/v1/tenants/$tenantId/patients/patientId/documents/documentId2")
+            val assetPath = gatewayRequest("/api/v1/tenants/$tenantId/patients/patientId/documents/documentId2")
                 .defaultToken()
                 .execute {
                     val body = it.readBodyValue<Document>()

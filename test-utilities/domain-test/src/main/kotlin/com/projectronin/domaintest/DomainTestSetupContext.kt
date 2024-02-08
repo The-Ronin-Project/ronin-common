@@ -9,13 +9,34 @@ import java.io.File
 import java.nio.file.Files
 import java.time.LocalDateTime
 
+interface ServiceDef {
+    val serviceName: String
+    val imageName: String
+    val gatewayVariables: List<String>
+}
+
+enum class KnownServices(
+    override val serviceName: String,
+    override val imageName: String,
+    override val gatewayVariables: List<String> = emptyList()
+) : ServiceDef {
+    Gateway("api", "prodeng-api-gateway"),
+    Auth("auth", "auth-service", listOf("SERVICES_AUTH_URI", "SERVICES_SEKI_URI")),
+    Assets("assets", "assets-service", listOf("SERVICES_ASSETS_URI")),
+    Capi("capi", "prodeng-clinician-api", listOf("SERVICES_CAPI_URI")),
+    Cts("cts", "clinician-triage-api", listOf("SERVICES_CTS_URI")),
+    Timeline("timeline", "prodeng-timeline-service", listOf("SERVICES_TIMELINE_URI")),
+    DocumentApi("document-api", "document-api-service", listOf("SERVICES_DOCUMENT_API_URI")),
+    DocumentData("document-data", "document-data-service"),
+    Tenant("tenant", "tenant-service", listOf("SERVICES_TENANT_URI"))
+}
+
 class DomainTestSetupContext internal constructor() {
 
     companion object {
         val mysqlContainerName = "mysql"
         val kafkaContainerName = "kafka"
         val wiremockContainerName = "wiremock"
-        val authServiceName = "auth"
     }
 
     private val logger: KLogger = KotlinLogging.logger { }
@@ -71,7 +92,7 @@ class DomainTestSetupContext internal constructor() {
         withWireMock {
             withM2MSupport()
         }
-        withProductEngineeringService(authServiceName, "auth-service", version) {
+        withProductEngineeringService(KnownServices.Auth, version) {
             dependsOnMySQLDatabase("auth")
             dependsOnWireMock()
             configYaml(
@@ -117,6 +138,20 @@ class DomainTestSetupContext internal constructor() {
         }
     }
 
+    fun withGateway(version: String, block: ApiGatewayContext.() -> Unit = {}) {
+        val ctx = ApiGatewayContext()
+        block(ctx)
+        withProductEngineeringService(KnownServices.Gateway, version) {
+            withoutConfigYaml()
+            extraConfiguration {
+                ctx.serviceMap.forEach { mapping ->
+                    withEnv(mapping.key, mapping.value)
+                }
+                this
+            }
+        }
+    }
+
     fun withProductEngineeringService(serviceName: String, imageName: String, version: String, fn: ProductEngineeringServiceContext.() -> Unit) {
         val info = services.getOrPut(
             serviceName
@@ -133,6 +168,10 @@ class DomainTestSetupContext internal constructor() {
             )
         }
         fn(info.context as ProductEngineeringServiceContext)
+    }
+
+    fun withProductEngineeringService(service: ServiceDef, version: String, fn: ProductEngineeringServiceContext.() -> Unit) {
+        withProductEngineeringService(service.serviceName, service.imageName, version, fn)
     }
 
     internal fun start() {
@@ -186,4 +225,19 @@ class DomainTestSetupContext internal constructor() {
     }
 }
 
-fun authServiceIssuer(): String = "http://${DomainTestSetupContext.authServiceName}:8080"
+fun authServiceIssuer(): String = "http://${KnownServices.Auth.serviceName}:8080"
+
+class ApiGatewayContext() {
+    internal val serviceMap = mutableMapOf<String, String>()
+
+    init {
+        KnownServices.values().forEach(::withServiceMapping)
+    }
+
+    fun withServiceMapping(serviceDef: ServiceDef): ApiGatewayContext {
+        serviceDef.gatewayVariables.forEach { varName ->
+            serviceMap += varName to "http://${serviceDef.serviceName}:8080"
+        }
+        return this
+    }
+}

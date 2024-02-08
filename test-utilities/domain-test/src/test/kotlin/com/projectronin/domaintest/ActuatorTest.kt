@@ -9,7 +9,7 @@ class ActuatorTest {
 
     @Test
     fun `should be able to retrieve actuator without auth`() = domainTest {
-        val serviceInfo = request("auth", "/actuator/info").execute { response ->
+        val serviceInfo = request(serviceName = "auth", path = "/actuator/info").execute { response ->
             response.readBodyTree().get("serviceInfo")
         }
 

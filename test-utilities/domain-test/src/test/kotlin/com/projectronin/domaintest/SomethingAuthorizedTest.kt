@@ -16,7 +16,7 @@ class SomethingAuthorizedTest {
             withScopes("admin:read")
         }
         request {
-            serviceGet(authServiceName, udpMappingsPath)
+            serviceGet(KnownServices.Auth, udpMappingsPath)
             token(token)
         }.execute {
             // we only care here that the response was OK
@@ -27,7 +27,7 @@ class SomethingAuthorizedTest {
     fun `should get forbidden without the right scopes`() = domainTest {
         val token = jwtAuthToken()
         request {
-            serviceGet(authServiceName, udpMappingsPath)
+            serviceGet(KnownServices.Auth, udpMappingsPath)
             token(token)
         }.execute(expectedHttpStatus = HttpURLConnection.HTTP_FORBIDDEN) {
             // we only care here that the response was OK
@@ -38,7 +38,7 @@ class SomethingAuthorizedTest {
     fun `should fail with a bad token`() = domainTest {
         val token = invalidJwtAuthToken()
         request {
-            serviceGet(authServiceName, udpMappingsPath)
+            serviceGet(KnownServices.Auth.serviceName, udpMappingsPath)
             token(token)
         }.execute(expectedHttpStatus = HttpURLConnection.HTTP_UNAUTHORIZED) {
             // we only care here that the response was OK
@@ -52,7 +52,7 @@ class SomethingAuthorizedTest {
                 withScopes("admin:read")
             }
         )
-        request(authServiceName, udpMappingsPath)
+        request(KnownServices.Auth, udpMappingsPath)
             .defaultToken()
             .execute {
                 // we only care here that the response was OK
@@ -67,7 +67,7 @@ class SomethingAuthorizedTest {
             }
         )
         clearSessionToken()
-        assertThatThrownBy { request(authServiceName, udpMappingsPath).defaultToken() }
+        assertThatThrownBy { request(KnownServices.Auth, udpMappingsPath).defaultToken() }
             .isInstanceOf(AssertionError::class.java)
     }
 }
