@@ -55,6 +55,8 @@ class DomainTestContext : AutoCloseable {
 
     val authServiceName = "auth"
 
+    val mockRsaKey: RSAKey by lazy { WireMockServiceContext.instance.rsaKey }
+
     val authServiceRsaKey: RSAKey by lazy {
 
         // this forces auth to instantiate the jwks, which is lazily created
@@ -74,6 +76,22 @@ class DomainTestContext : AutoCloseable {
         client.shutdown()
 
         key
+    }
+
+    val rsaKey: RSAKey by lazy {
+        if (ProductEngineeringServiceContext.serviceMap[authServiceName] != null) {
+            authServiceRsaKey
+        } else {
+            mockRsaKey
+        }
+    }
+
+    val issuer: String by lazy {
+        if (ProductEngineeringServiceContext.serviceMap[authServiceName] != null) {
+            authServiceIssuer()
+        } else {
+            oidcIssuer()
+        }
     }
 
     val httpClient: OkHttpClient
@@ -147,13 +165,13 @@ class DomainTestContext : AutoCloseable {
      * ```
      */
     fun jwtAuthToken(block: RoninTokenBuilderContext.() -> Unit = {}): String {
-        return com.projectronin.test.jwt.jwtAuthToken(authServiceRsaKey, authServiceIssuer()) {
+        return com.projectronin.test.jwt.jwtAuthToken(rsaKey, issuer) {
             block(this)
         }
     }
 
     fun invalidJwtAuthToken(): String {
-        return com.projectronin.test.jwt.jwtAuthToken(generateRandomRsa(), authServiceIssuer())
+        return com.projectronin.test.jwt.jwtAuthToken(generateRandomRsa(), issuer)
     }
 
     /**

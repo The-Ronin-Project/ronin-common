@@ -7,7 +7,7 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ExtensionContext.Store.CloseableResource
 
-class DomainTestExtension : BeforeAllCallback, CloseableResource {
+open class DomainTestExtension : BeforeAllCallback, CloseableResource {
 
     private val testContext = DomainTestSetupContext()
     private val logger: KLogger = KotlinLogging.logger { }
@@ -18,7 +18,7 @@ class DomainTestExtension : BeforeAllCallback, CloseableResource {
 
             val ci = runCatching {
                 ClassGraph().enableClassInfo().scan().getClassesImplementing(DomainTestServicesProvider::class.java)
-                    .find { it.implementsInterface(DomainTestServicesProvider::class.java) }
+                    .find { it.implementsInterface(DomainTestServicesProvider::class.java) && !it.isAbstract && !it.isInterface }
             }
                 .onFailure { logger.error(it) { "Exception looking for implementation of DomainTestServicesProvider" } }
                 .getOrElse { e -> throw RuntimeException("Could not start test context", e) } ?: throw RuntimeException("No implementation of DomainTestServicesProvider found")

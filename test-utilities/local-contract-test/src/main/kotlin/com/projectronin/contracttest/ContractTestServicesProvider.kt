@@ -1,0 +1,5 @@
+package com.projectronin.contracttest
+
+import com.projectronin.domaintest.DomainTestServicesProvider
+
+interface ContractTestServicesProvider : DomainTestServicesProvider

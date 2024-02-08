@@ -97,9 +97,9 @@ class DomainTestSetupContext internal constructor() {
                   auth:
                     issuers:
                       - ${authServiceIssuer()}
-                      - ${auth0Issuer()}
+                      - ${oidcIssuer()}
                   auth0:
-                    domain-url: ${internalAuth0Uri()}
+                    domain-url: ${internalOidcIssuer()}
                     m2m-client-id: "foo"
                     m2m-client-secret: "bar"
                     use-auth0-user-management: false

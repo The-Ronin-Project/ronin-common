@@ -24,7 +24,7 @@ class ProductEngineeringServiceContext internal constructor(
     private val applicationRunDirectory = testRunDirectory.resolve(serviceName).also { it.mkdirs() }
     private val serviceYamlFile = applicationRunDirectory.resolve("application.yaml")
     private val _dependencies = mutableSetOf<String>()
-    private var extraConfig: GenericContainer<*>.() -> GenericContainer<*> = { this }
+    private var extraConfig = mutableListOf<GenericContainer<*>.() -> GenericContainer<*>>({ this })
 
     override val dependencies: Set<String>
         get() = _dependencies.toSet()
@@ -56,7 +56,7 @@ class ProductEngineeringServiceContext internal constructor(
     }
 
     fun extraConfiguration(block: GenericContainer<*>.() -> GenericContainer<*>) {
-        extraConfig = block
+        extraConfig += block
     }
 
     fun dependsOnMySQL() {
@@ -92,7 +92,7 @@ class ProductEngineeringServiceContext internal constructor(
             .withExposedPorts(8080)
             .waitingFor(LogMessageWaitStrategy().withRegEx(".*Started .* in .* seconds.*"))
             .withStartupTimeout(Duration.parse("PT5M"))
-            .apply { extraConfig(this) }
+            .apply { extraConfig.fold(this) { container, cfg -> cfg(container) } }
     }
 
     override fun bootstrap(container: GenericContainer<*>) {

@@ -2,10 +2,10 @@ package com.projectronin.domaintest.serviceproviders
 
 import com.projectronin.domaintest.DomainTestServicesProvider
 import com.projectronin.domaintest.DomainTestSetupContext
-import com.projectronin.domaintest.auth0Issuer
-import com.projectronin.domaintest.internalAuth0Uri
 import com.projectronin.domaintest.internalJdbcUrlFor
+import com.projectronin.domaintest.internalOidcIssuer
 import com.projectronin.domaintest.kafkaInternalBootstrapServers
+import com.projectronin.domaintest.oidcIssuer
 
 class DocumentsServicesProvider : DomainTestServicesProvider {
 
@@ -56,7 +56,7 @@ class DocumentsServicesProvider : DomainTestServicesProvider {
                       auth:
                         issuers:
                           - http://auth:8080
-                          - ${auth0Issuer()}
+                          - ${oidcIssuer()}
                       product:
                         document-api:
                           topic-document-events: "$documentEventsTopic"
@@ -99,7 +99,7 @@ class DocumentsServicesProvider : DomainTestServicesProvider {
                       auth:
                         issuers:
                           - http://auth:8080
-                          - ${auth0Issuer()}
+                          - ${oidcIssuer()}
                       kafka:
                         bootstrap-servers: $kafkaInternalBootstrapServers
                         security-protocol: PLAINTEXT
@@ -142,7 +142,7 @@ class DocumentsServicesProvider : DomainTestServicesProvider {
                       auth:
                         issuers:
                           - http://auth:8080
-                          - ${auth0Issuer()}
+                          - ${oidcIssuer()}
                       product:
                         assets:
                           env: test
@@ -162,7 +162,7 @@ class DocumentsServicesProvider : DomainTestServicesProvider {
                         security-protocol: PLAINTEXT
                     auth:
                         m2m:
-                          url: ${internalAuth0Uri()}
+                          url: ${internalOidcIssuer()}
                           clientId: test
                           clientSecret: test
                     """.trimIndent()

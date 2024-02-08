@@ -38,51 +38,29 @@ class WireMockServiceContext private constructor(private val network: Network) :
 
     private val arbitraryWiremockSetups = mutableListOf<() -> Unit>()
 
-    private val rsaKey = generateRandomRsa()
+    internal val rsaKey = generateRandomRsa()
 
     private var m2mEnabled: Boolean = false
+    private var oidcEnabled: Boolean = false
 
     init {
         _instance = this
     }
 
-    fun auth0IssuerPath(): String = "/auth0"
+    fun oidcIssuerPath(): String = "/auth0"
 
-    fun auth0Issuer(): String = "http://wiremock:8080${auth0IssuerPath()}"
+    fun oidcIssuer(): String = "http://wiremock:8080${oidcIssuerPath()}"
 
     fun generateToken(rsaKey: RSAKey, claimSetCustomizer: JWTClaimsSet.Builder.() -> JWTClaimsSet.Builder = { this }): String =
-        com.projectronin.test.jwt.generateToken(rsaKey, auth0Issuer(), claimSetCustomizer)
+        com.projectronin.test.jwt.generateToken(rsaKey, oidcIssuer(), claimSetCustomizer)
 
-    fun withM2MSupport(vararg scope: String) {
-        if (!m2mEnabled) {
-            m2mEnabled = true
+    fun withOIDCSupport() {
+        if (!oidcEnabled) {
+            oidcEnabled = true
+            val jwks = JWKSet(listOf(rsaKey))
+            val issuerPath = oidcIssuerPath()
+            val issuer = oidcIssuer()
             arbitraryWiremockSetups += {
-                val jwks = JWKSet(listOf(rsaKey, rsaKey))
-                val issuerPath = auth0IssuerPath()
-                val issuer = auth0Issuer()
-
-                val tokenBody = mapOf(
-                    "access_token" to generateToken(rsaKey) {
-                        if (scope.isNotEmpty()) {
-                            claim("scope", scope.joinToString(","))
-                        } else {
-                            this
-                        }
-                    },
-                    "scope" to scope.joinToString(" "),
-                    "expires_in" to 86400,
-                    "token_type" to "Bearer"
-                )
-
-                stubFor(
-                    post(urlPathMatching("$issuerPath/oauth/token"))
-                        .willReturn(
-                            aResponse()
-                                .withHeader("Content-Type", "application/json")
-                                .withBody(newMinimalObjectMapper().writeValueAsString(tokenBody))
-                        )
-                )
-
                 // language=json
                 val openidConfiguration = """
                 {
@@ -132,7 +110,7 @@ class WireMockServiceContext private constructor(private val network: Network) :
                 """.trimIndent()
 
                 stubFor(
-                    get(urlPathMatching("$issuer/oauth2/jwks"))
+                    get(urlPathMatching("$issuerPath/oauth2/jwks"))
                         .willReturn(
                             aResponse()
                                 .withHeader("Content-Type", "application/json")
@@ -146,6 +124,38 @@ class WireMockServiceContext private constructor(private val network: Network) :
                             aResponse()
                                 .withHeader("Content-Type", "application/json")
                                 .withBody(openidConfiguration)
+                        )
+                )
+            }
+        }
+    }
+
+    fun withM2MSupport(vararg scope: String) {
+        if (!m2mEnabled) {
+            m2mEnabled = true
+            withOIDCSupport()
+            arbitraryWiremockSetups += {
+                val issuerPath = oidcIssuerPath()
+
+                val tokenBody = mapOf(
+                    "access_token" to generateToken(rsaKey) {
+                        if (scope.isNotEmpty()) {
+                            claim("scope", scope.joinToString(","))
+                        } else {
+                            this
+                        }
+                    },
+                    "scope" to scope.joinToString(" "),
+                    "expires_in" to 86400,
+                    "token_type" to "Bearer"
+                )
+
+                stubFor(
+                    post(urlPathMatching("$issuerPath/oauth/token"))
+                        .willReturn(
+                            aResponse()
+                                .withHeader("Content-Type", "application/json")
+                                .withBody(newMinimalObjectMapper().writeValueAsString(tokenBody))
                         )
                 )
             }
@@ -180,11 +190,11 @@ fun internalWiremockUrl(path: String): String = "http://wiremock:8080$path"
 
 fun externalWiremockUrl(path: String): String = "http://localhost:${WireMockServiceContext.instance.port}$path"
 
-fun externalAuth0Uri(): String = "http://localhost:${WireMockServiceContext.instance.port}${WireMockServiceContext.instance.auth0IssuerPath()}"
+fun externalOidcIssuer(): String = "http://localhost:${WireMockServiceContext.instance.port}${WireMockServiceContext.instance.oidcIssuerPath()}"
 
-fun internalAuth0Uri(): String = "http://wiremock:8080${WireMockServiceContext.instance.auth0IssuerPath()}"
+fun internalOidcIssuer(): String = "http://wiremock:8080${WireMockServiceContext.instance.oidcIssuerPath()}"
 
-fun auth0Issuer(): String = WireMockServiceContext.instance.auth0Issuer()
+fun oidcIssuer(): String = WireMockServiceContext.instance.oidcIssuer()
 
 fun resetWiremock() {
     WireMockServiceContext.instance.reset()
