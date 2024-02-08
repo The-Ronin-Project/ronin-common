@@ -20,6 +20,8 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
+    testImplementation(libs.logback.classic)
+    testImplementation(libs.logback.core)
 }
 
 tasks.test {
