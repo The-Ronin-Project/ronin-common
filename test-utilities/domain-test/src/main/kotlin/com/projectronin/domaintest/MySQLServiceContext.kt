@@ -46,7 +46,7 @@ class MySQLServiceContext private constructor(private val network: Network, val 
                 .withUsername("test")
                 .withPassword(rootPassword)
                 .withNetwork(network)
-                .withNetworkAliases(DomainTestSetupContext.mysqlContainerName)
+                .withNetworkAliases(SupportingServices.MySql.containerName)
         }
         return container!!
     }
@@ -81,7 +81,7 @@ class MySQLServiceContext private constructor(private val network: Network, val 
 
 fun internalJdbcUrlFor(dbName: String): String {
     val db = MySQLServiceContext.instance.findDb(dbName)
-    return "jdbc:mysql://${db.username}:${db.password}@${DomainTestSetupContext.mysqlContainerName}:3306/$dbName?createDatabaseIfNotExist=true"
+    return "jdbc:mysql://${db.username}:${db.password}@${SupportingServices.MySql.containerName}:3306/$dbName?createDatabaseIfNotExist=true"
 }
 
 fun externalJdbcUrlFor(dbName: String): String {

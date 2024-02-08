@@ -64,7 +64,7 @@ class ProductEngineeringServiceContext internal constructor(
     }
 
     fun dependsOnMySQL() {
-        _dependencies += DomainTestSetupContext.mysqlContainerName
+        _dependencies += SupportingServices.MySql.containerName
     }
 
     fun dependsOnMySQLDatabase(dbName: String, username: String = dbName, password: String = dbName) {
@@ -73,12 +73,12 @@ class ProductEngineeringServiceContext internal constructor(
     }
 
     fun dependsOnKafka(vararg topic: String) {
-        _dependencies += DomainTestSetupContext.kafkaContainerName
+        _dependencies += SupportingServices.Kafka.containerName
         KafkaServiceContext.instance.topics(*topic)
     }
 
     fun dependsOnWireMock() {
-        _dependencies += DomainTestSetupContext.wiremockContainerName
+        _dependencies += SupportingServices.Wiremock.containerName
     }
 
     override fun createContainer(): GenericContainer<*> {

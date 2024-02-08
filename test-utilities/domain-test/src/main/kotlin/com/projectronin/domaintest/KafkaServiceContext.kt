@@ -49,8 +49,8 @@ class KafkaServiceContext private constructor(private val network: Network) : Do
         if (_container == null) {
             _container = KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.4.0"))
                 .withNetwork(network)
-                .withNetworkAliases(DomainTestSetupContext.kafkaContainerName)
-                .withListener { "kafka:19092" }
+                .withNetworkAliases(SupportingServices.Kafka.containerName)
+                .withListener { "${SupportingServices.Kafka.containerName}:19092" }
                 // .withEnv("KAFKA_LISTENERS", "PLAINTEXT://0.0.0.0:9093,BROKER://0.0.0.0:9092,INTERNAL://kafka:19092")
                 // .withEnv("KAFKA_LISTENER_SECURITY_PROTOCOL_MAP", "BROKER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT")
                 // .withEnv("KAFKA_ADVERTISED_LISTENERS", "PLAINTEXT://localhost:9093,BROKER://localhost:9092,INTERNAL://kafka:19092")

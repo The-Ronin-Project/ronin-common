@@ -31,13 +31,17 @@ enum class KnownServices(
     Tenant("tenant", "tenant-service", listOf("SERVICES_TENANT_URI"))
 }
 
-class DomainTestSetupContext internal constructor() {
+interface SupportingService {
+    val containerName: String
+}
 
-    companion object {
-        val mysqlContainerName = "mysql"
-        val kafkaContainerName = "kafka"
-        val wiremockContainerName = "wiremock"
-    }
+enum class SupportingServices(override val containerName: String) : SupportingService {
+    MySql("mysql"),
+    Kafka("kafka"),
+    Wiremock("wiremock")
+}
+
+class DomainTestSetupContext internal constructor() {
 
     private val logger: KLogger = KotlinLogging.logger { }
     private val testRunName: String = LocalDateTime.now().toString().replace("[^0-9-]".toRegex(), "-")
@@ -60,31 +64,29 @@ class DomainTestSetupContext internal constructor() {
 
     private val network = Network.newNetwork()
 
+    fun withSupportingService(service: SupportingService, context: DomainTestContainerContext) {
+        services += service.containerName to ServiceInfo(
+            service.containerName,
+            context
+        )
+    }
+
     fun withMySQL(fn: MySQLServiceContext.() -> Unit = { }) {
         val context = MySQLServiceContext.createInstance(network, "root")
         fn(context)
-        services += mysqlContainerName to ServiceInfo(
-            mysqlContainerName,
-            context
-        )
+        withSupportingService(SupportingServices.MySql, context)
     }
 
     fun withKafka(fn: KafkaServiceContext.() -> Unit = { }) {
         val context = KafkaServiceContext.createInstance(network)
         fn(context)
-        services += kafkaContainerName to ServiceInfo(
-            kafkaContainerName,
-            context
-        )
+        withSupportingService(SupportingServices.Kafka, context)
     }
 
     fun withWireMock(fn: WireMockServiceContext.() -> Unit = {}) {
         val context = WireMockServiceContext.createInstance(network)
         fn(context)
-        services += wiremockContainerName to ServiceInfo(
-            wiremockContainerName,
-            context
-        )
+        withSupportingService(SupportingServices.Wiremock, context)
     }
 
     fun withAuth(version: String) {

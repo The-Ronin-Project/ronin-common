@@ -166,7 +166,7 @@ class WireMockServiceContext private constructor(private val network: Network) :
         if (_container == null) {
             _container = WireMockContainer("wiremock/wiremock:2.35.0")
                 .withNetwork(network)
-                .withNetworkAliases(DomainTestSetupContext.wiremockContainerName)
+                .withNetworkAliases(SupportingServices.Wiremock.containerName)
                 .withCliArg("--verbose")
         }
         return container
