@@ -22,15 +22,19 @@ class ProductEngineeringServiceContext internal constructor(
     }
 
     private val applicationRunDirectory = testRunDirectory.resolve(serviceName).also { it.mkdirs() }
-    private val serviceYamlFile = applicationRunDirectory.resolve("application.yaml")
+    private val serviceConfigFile: File
+        get() = applicationRunDirectory.resolve("application.${configPair?.first ?: "yml"}")
+    private val serviceConfigContainerPath: String
+        get() = "/domaintest/config.${configPair?.first ?: "yml"}"
     private val _dependencies = mutableSetOf<String>()
     private var extraConfig = mutableListOf<GenericContainer<*>.() -> GenericContainer<*>>({ this })
 
     override val dependencies: Set<String>
         get() = _dependencies.toSet()
 
-    // language=yaml
-    private var _configYaml: String? =
+    private var configPair: Pair<String, String>? = Pair(
+        "yml",
+        // language=yaml
         """
         spring:
           config:
@@ -48,15 +52,23 @@ class ProductEngineeringServiceContext internal constructor(
             root: ERROR
             com.projectronin: INFO
         """.trimIndent()
+    )
 
     fun configYaml(
         @Language("yaml") yaml: String
     ) {
-        _configYaml = yaml
+        configPair = Pair("yml", yaml)
+    }
+
+    @Deprecated("Use configYaml instead")
+    fun configProperties(
+        @Language("properties") properties: String
+    ) {
+        configPair = Pair("properties", properties)
     }
 
     fun withoutConfigYaml() {
-        _configYaml = null
+        configPair = null
     }
 
     fun extraConfiguration(block: GenericContainer<*>.() -> GenericContainer<*>) {
@@ -82,15 +94,15 @@ class ProductEngineeringServiceContext internal constructor(
     }
 
     override fun createContainer(): GenericContainer<*> {
-        _configYaml?.let { serviceYamlFile.writeText(it) }
+        configPair?.let { serviceConfigFile.writeText(it.second) }
         return GenericContainer(DockerImageName.parse("docker-proxy.devops.projectronin.io/$imageName:$version"))
             .withNetwork(network)
             .withNetworkAliases(serviceName)
-            .withEnv("SPRING_PROFILES_ACTIVE", "local,domaintest")
+            .withEnv("SPRING_PROFILES_ACTIVE", "local,domaintest,test")
             .run {
-                _configYaml?.let { cfg ->
-                    withEnv("SPRING_CONFIG_LOCATION", "/domaintest/config.yml")
-                        .withCopyToContainer(Transferable.of(cfg), "/domaintest/config.yml")
+                configPair?.let { cfg ->
+                    withEnv("SPRING_CONFIG_LOCATION", serviceConfigContainerPath)
+                        .withCopyToContainer(Transferable.of(cfg.second), serviceConfigContainerPath)
                 } ?: this
             }
             .withExposedPorts(8080)

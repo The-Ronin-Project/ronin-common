@@ -5,6 +5,7 @@ import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.containers.Network
 import java.sql.DriverManager
+import java.util.UUID
 
 @Suppress("SqlNoDataSourceInspection")
 class MySQLServiceContext private constructor(private val network: Network, val rootPassword: String = "root") : DomainTestContainerContext {
@@ -41,9 +42,10 @@ class MySQLServiceContext private constructor(private val network: Network, val 
 
     override fun createContainer(): GenericContainer<*> {
         if (container == null) {
+            val dbIdentifier = UUID.randomUUID().toString().replace("-", "").substring(0, 5)
             container = MySQLContainer(MysqlVersionHelper.MYSQL_VERSION_OCI)
-                .withDatabaseName("test")
-                .withUsername("test")
+                .withDatabaseName("test_$dbIdentifier")
+                .withUsername("test_$dbIdentifier")
                 .withPassword(rootPassword)
                 .withNetwork(network)
                 .withNetworkAliases(SupportingServices.MySql.containerName)
@@ -52,7 +54,6 @@ class MySQLServiceContext private constructor(private val network: Network, val 
     }
 
     override fun bootstrap(container: GenericContainer<*>) {
-        // nothing to do
         DriverManager.getConnection("jdbc:mysql://root:$rootPassword@localhost:${container.getMappedPort(3306)}").use { conn ->
             dbs.forEach { db ->
                 conn.createStatement().use { stmt ->
@@ -86,12 +87,17 @@ fun internalJdbcUrlFor(dbName: String): String {
 
 fun externalJdbcUrlFor(dbName: String): String {
     val db = MySQLServiceContext.instance.findDb(dbName)
-    val container = MySQLServiceContext.instance.container
-    if (container?.isRunning() != true) {
-        throw IllegalStateException("MySQL container not started")
-    }
-    return "jdbc:mysql://${db.username}:${db.password}@localhost:${container.getMappedPort(3306)}/$dbName?createDatabaseIfNotExist=true"
+    return "jdbc:mysql://${db.username}:${db.password}@localhost:$externalMySqlPort/$dbName?createDatabaseIfNotExist=true"
 }
+
+val externalMySqlPort: Int
+    get() {
+        val container = MySQLServiceContext.instance.container
+        if (container?.isRunning() != true) {
+            throw IllegalStateException("MySQL container not started")
+        }
+        return container.getMappedPort(3306)
+    }
 
 fun usernameFor(dbName: String): String = MySQLServiceContext.instance.findDb(dbName).username
 fun passwordFor(dbName: String): String = MySQLServiceContext.instance.findDb(dbName).password

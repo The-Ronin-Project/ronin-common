@@ -190,6 +190,9 @@ fun internalWiremockUrl(path: String): String = "http://wiremock:8080$path"
 
 fun externalWiremockUrl(path: String): String = "http://localhost:${WireMockServiceContext.instance.port}$path"
 
+val externalWiremockPort: Int
+    get() = WireMockServiceContext.instance.port
+
 fun externalOidcIssuer(): String = "http://localhost:${WireMockServiceContext.instance.port}${WireMockServiceContext.instance.oidcIssuerPath()}"
 
 fun internalOidcIssuer(): String = "http://wiremock:8080${WireMockServiceContext.instance.oidcIssuerPath()}"
