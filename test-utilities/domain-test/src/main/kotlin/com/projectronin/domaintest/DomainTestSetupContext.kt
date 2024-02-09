@@ -62,7 +62,7 @@ class DomainTestSetupContext internal constructor() {
     }
     private val services = mutableMapOf<String, ServiceInfo>()
 
-    private val network = Network.newNetwork()
+    val network = Network.newNetwork()
 
     fun withSupportingService(service: SupportingService, context: DomainTestContainerContext) {
         services += service.containerName to ServiceInfo(

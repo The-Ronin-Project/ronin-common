@@ -168,6 +168,7 @@ class WireMockServiceContext private constructor(private val network: Network) :
                 .withNetwork(network)
                 .withNetworkAliases(SupportingServices.Wiremock.containerName)
                 .withCliArg("--verbose")
+                .withCliArg("--local-response-templating")
         }
         return container
     }

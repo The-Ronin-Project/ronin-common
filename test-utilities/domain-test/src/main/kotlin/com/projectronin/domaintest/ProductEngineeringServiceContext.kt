@@ -22,53 +22,65 @@ class ProductEngineeringServiceContext internal constructor(
     }
 
     private val applicationRunDirectory = testRunDirectory.resolve(serviceName).also { it.mkdirs() }
-    private val serviceConfigFile: File
-        get() = applicationRunDirectory.resolve("application.${configPair?.first ?: "yml"}")
-    private val serviceConfigContainerPath: String
-        get() = "/domaintest/config.${configPair?.first ?: "yml"}"
     private val _dependencies = mutableSetOf<String>()
     private var extraConfig = mutableListOf<GenericContainer<*>.() -> GenericContainer<*>>({ this })
+    private val activeSpringProfiles = mutableListOf("local", "domaintest")
 
     override val dependencies: Set<String>
         get() = _dependencies.toSet()
 
-    private var configPair: Pair<String, String>? = Pair(
-        "yml",
-        // language=yaml
-        """
-        spring:
-          config:
-            import: classpath:application.yml
-        ---
-        spring:
-          datasource:
-            url:  "jdbc:mysql://${imageName.replace("[^a-zA-Z]+".toRegex(), "_")}/auth?createDatabaseIfNotExist=true"
-            username: root
-            password: root
-          liquibase:
-            enabled: true
-        logging:
-          level:
-            root: ERROR
-            com.projectronin: INFO
-        """.trimIndent()
-    )
+    private var configPairProvider: () -> Pair<String, String>? = {
+        Pair(
+            "yml",
+            // language=yaml
+            """
+            spring:
+              config:
+                import: classpath:application.yml
+            ---
+            spring:
+              datasource:
+                url:  "jdbc:mysql://${imageName.replace("[^a-zA-Z]+".toRegex(), "_")}/auth?createDatabaseIfNotExist=true"
+                username: root
+                password: root
+              liquibase:
+                enabled: true
+            logging:
+              level:
+                root: ERROR
+                com.projectronin: INFO
+            """.trimIndent()
+        )
+    }
 
     fun configYaml(
         @Language("yaml") yaml: String
     ) {
-        configPair = Pair("yml", yaml)
+        configPairProvider = { Pair("yml", yaml) }
     }
 
     @Deprecated("Use configYaml instead")
     fun configProperties(
         @Language("properties") properties: String
     ) {
-        configPair = Pair("properties", properties)
+        configPairProvider = { Pair("properties", properties) }
+    }
+
+    fun configYamlProvider(
+        provider: () -> String
+    ) {
+        configPairProvider = { Pair("yml", provider()) }
+    }
+
+    @Deprecated("Use configYaml instead")
+    fun configPropertiesProvider(
+        provider: () -> String
+    ) {
+        configPairProvider = { Pair("properties", provider()) }
     }
 
     fun withoutConfigYaml() {
-        configPair = null
+        configPairProvider = { null }
     }
 
     fun extraConfiguration(block: GenericContainer<*>.() -> GenericContainer<*>) {
@@ -93,12 +105,24 @@ class ProductEngineeringServiceContext internal constructor(
         _dependencies += SupportingServices.Wiremock.containerName
     }
 
+    fun withAdditionalActiveSpringProfiles(vararg profile: String) {
+        activeSpringProfiles += profile
+    }
+
+    fun withActiveSpringProfiles(vararg profile: String) {
+        activeSpringProfiles.clear()
+        activeSpringProfiles += profile
+    }
+
     override fun createContainer(): GenericContainer<*> {
+        val configPair = configPairProvider()
+        val serviceConfigFile: File = applicationRunDirectory.resolve("application.${configPair?.first ?: "yml"}")
+        val serviceConfigContainerPath: String = "/domaintest/config.${configPair?.first ?: "yml"}"
         configPair?.let { serviceConfigFile.writeText(it.second) }
         return GenericContainer(DockerImageName.parse("docker-proxy.devops.projectronin.io/$imageName:$version"))
             .withNetwork(network)
             .withNetworkAliases(serviceName)
-            .withEnv("SPRING_PROFILES_ACTIVE", "local,domaintest,test")
+            .withEnv("SPRING_PROFILES_ACTIVE", activeSpringProfiles.joinToString(","))
             .run {
                 configPair?.let { cfg ->
                     withEnv("SPRING_CONFIG_LOCATION", serviceConfigContainerPath)

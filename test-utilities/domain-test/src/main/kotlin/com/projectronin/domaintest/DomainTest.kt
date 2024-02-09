@@ -389,10 +389,11 @@ class DomainTestContext : AutoCloseable {
             }
         }
 
-        fun then(label: String? = null, expectedStatus: Int = HttpURLConnection.HTTP_MOVED_TEMP, verifier: (Response) -> Unit): RedirectContext {
+        fun then(label: String? = null, expectedStatus: Int = HttpURLConnection.HTTP_MOVED_TEMP, urlProvider: (Response) -> URL = { it.redirectUrl }, verifier: (Response) -> Unit): RedirectContext {
+            val url = urlProvider(response)
             return RedirectContext(
-                requestContext = request().configure { url(response.redirectUrl) },
-                label = label ?: response.redirectUrl.toString(),
+                requestContext = request().configure { url(url) },
+                label = label ?: url.toString(),
                 expectedStatus = expectedStatus,
                 verifier = verifier
             )
