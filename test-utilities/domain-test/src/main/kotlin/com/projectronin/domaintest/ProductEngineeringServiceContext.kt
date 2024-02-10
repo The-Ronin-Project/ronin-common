@@ -204,7 +204,6 @@ class ProductEngineeringServiceContext internal constructor(
             }
             .run {
                 if (coverageViable) {
-                    println("${coverageDir.absolutePath}, $internalCoverageOutputPath")
                     @Suppress("DEPRECATION")
                     withFileSystemBind(agentJarLocation.absolutePath, internalCoverageAgentPath)
                         .withFileSystemBind(coverageDir.absolutePath, internalCoverageOutputPath)
@@ -221,6 +220,53 @@ class ProductEngineeringServiceContext internal constructor(
     override fun bootstrap(container: GenericContainer<*>) {
         // do nothing
         serviceMap += serviceName to container
+
+        writeDebugConfigIfPossible(container)
+    }
+
+    private fun writeDebugConfigIfPossible(container: GenericContainer<*>) {
+        if (enableDebugging) {
+            fun findIdeaDir(dir: File): File? {
+                val childDir = dir.resolve(".idea")
+                return if (childDir.exists()) {
+                    childDir
+                } else {
+                    val parentFile = dir.parentFile
+                    if (parentFile != null) {
+                        findIdeaDir(parentFile)
+                    } else {
+                        return null
+                    }
+                }
+            }
+
+            findIdeaDir(testRunDirectory)?.let { ideaDir ->
+                val destDir = ideaDir.resolve("runConfigurations")
+                if (!destDir.exists()) {
+                    destDir.mkdirs()
+                }
+                destDir.resolve("$serviceName.xml").writeText(
+                    // language=xml
+                    """
+                    <component name="ProjectRunConfigurationManager">
+                      <configuration default="false" name="$serviceName" type="Remote">
+                        <option name="USE_SOCKET_TRANSPORT" value="true" />
+                        <option name="SERVER_MODE" value="false" />
+                        <option name="SHMEM_ADDRESS" />
+                        <option name="HOST" value="localhost" />
+                        <option name="PORT" value="${container.getMappedPort(5005)}" />
+                        <option name="AUTO_RESTART" value="false" />
+                        <RunnerSettings RunnerId="Debug">
+                          <option name="DEBUG_PORT" value="${container.getMappedPort(5005)}" />
+                          <option name="LOCAL" value="false" />
+                        </RunnerSettings>
+                        <method v="2" />
+                      </configuration>
+                    </component>
+                    """.trimIndent()
+                )
+            }
+        }
     }
 }
 
