@@ -7,7 +7,9 @@ import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy
 import org.testcontainers.images.builder.Transferable
 import org.testcontainers.utility.DockerImageName
 import java.io.File
+import java.lang.management.ManagementFactory
 import java.time.Duration
+import java.util.UUID
 
 class ProductEngineeringServiceContext internal constructor(
     private val imageName: String,
@@ -25,6 +27,24 @@ class ProductEngineeringServiceContext internal constructor(
     private val _dependencies = mutableSetOf<String>()
     private var extraConfig = mutableListOf<GenericContainer<*>.() -> GenericContainer<*>>({ this })
     private val activeSpringProfiles = mutableListOf("local", "domaintest")
+    private var attemptCoverage: Boolean = false
+    private var coverageViable: Boolean = false
+    private var enableDebugging: Boolean = false
+    private var suspendIfDebuggingEnabled: Boolean = false
+    private val internalCoverageAgentPath = "/coverage/agent.jar"
+    private val internalCoverageOutputPath = "/coverage/output/jacoco"
+    private val agentJarLocation: File by lazy {
+        val tf = File.createTempFile("coverage-agent", ".jar")
+        tf.deleteOnExit()
+        tf
+    }
+    private val coverageDir: File by lazy {
+        val f = File(testRunDirectory.absolutePath.replace("(.*/build).*".toRegex(), "$1")).resolve("jacoco")
+        if (!f.exists()) {
+            f.mkdirs()
+        }
+        f
+    }
 
     override val dependencies: Set<String>
         get() = _dependencies.toSet()
@@ -114,11 +134,61 @@ class ProductEngineeringServiceContext internal constructor(
         activeSpringProfiles += profile
     }
 
+    fun withDebugging(suspend: Boolean = false) {
+        enableDebugging = true
+        suspendIfDebuggingEnabled = suspend
+    }
+
+    fun withCoverage() {
+        attemptCoverage = true
+    }
+
+    private fun debuggingOptions(): List<String> {
+        return if (enableDebugging) {
+            listOf("-agentlib:jdwp=transport=dt_socket,server=y,suspend=${if (suspendIfDebuggingEnabled) "y" else "n"},address=*:5005")
+        } else {
+            emptyList()
+        }
+    }
+
+    private fun coverageOptions(): List<String> {
+        return if (attemptCoverage) {
+            val runtimeMxBean = ManagementFactory.getRuntimeMXBean()
+            val arguments = runtimeMxBean.inputArguments
+
+            val javaAgentArgument = arguments.firstOrNull { it.matches("""-javaagent.*jacocoagent.jar.*""".toRegex()) }
+
+            if (javaAgentArgument != null) {
+                val jarPathPattern = "-javaagent:(.*?jacocoagent.jar)".toRegex()
+                val jarPathExtractionPattern = ".*$jarPathPattern.*".toRegex()
+                val sourceJarLocation = File(javaAgentArgument.replace(jarPathExtractionPattern, "$1"))
+
+                sourceJarLocation.copyTo(agentJarLocation, overwrite = true)
+
+                val newJavaAgentArgument = javaAgentArgument
+                    .replace(jarPathPattern, "-javaagent:$internalCoverageAgentPath")
+                    .replace("build/jacoco/.*?\\.exec".toRegex(), "$internalCoverageOutputPath/test-${UUID.randomUUID()}.exec")
+
+                coverageViable = true
+
+                listOf(newJavaAgentArgument)
+            } else {
+                emptyList()
+            }
+        } else {
+            emptyList()
+        }
+    }
+
     override fun createContainer(): GenericContainer<*> {
         val configPair = configPairProvider()
         val serviceConfigFile: File = applicationRunDirectory.resolve("application.${configPair?.first ?: "yml"}")
-        val serviceConfigContainerPath: String = "/domaintest/config.${configPair?.first ?: "yml"}"
+        val serviceConfigContainerPath = "/domaintest/config.${configPair?.first ?: "yml"}"
         configPair?.let { serviceConfigFile.writeText(it.second) }
+
+        val options = debuggingOptions() + coverageOptions()
+        val ports = listOf(8080) + if (enableDebugging) listOf(5005) else emptyList()
+
         return GenericContainer(DockerImageName.parse("docker-proxy.devops.projectronin.io/$imageName:$version"))
             .withNetwork(network)
             .withNetworkAliases(serviceName)
@@ -129,7 +199,20 @@ class ProductEngineeringServiceContext internal constructor(
                         .withCopyToContainer(Transferable.of(cfg.second), serviceConfigContainerPath)
                 } ?: this
             }
-            .withExposedPorts(8080)
+            .run {
+                options.takeIf { it.isNotEmpty() }?.let { withEnv("JDK_JAVA_OPTIONS", it.joinToString(" ")) } ?: this
+            }
+            .run {
+                if (coverageViable) {
+                    println("${coverageDir.absolutePath}, $internalCoverageOutputPath")
+                    @Suppress("DEPRECATION")
+                    withFileSystemBind(agentJarLocation.absolutePath, internalCoverageAgentPath)
+                        .withFileSystemBind(coverageDir.absolutePath, internalCoverageOutputPath)
+                } else {
+                    this
+                }
+            }
+            .withExposedPorts(*ports.toTypedArray())
             .waitingFor(LogMessageWaitStrategy().withRegEx(".*Started .* in .* seconds.*"))
             .withStartupTimeout(Duration.parse("PT5M"))
             .apply { extraConfig.fold(this) { container, cfg -> cfg(container) } }

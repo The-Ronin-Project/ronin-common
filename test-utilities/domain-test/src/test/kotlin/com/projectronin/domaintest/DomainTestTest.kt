@@ -210,4 +210,9 @@ class DomainTestTest {
                 assertThat(it.body?.string()).isEqualTo("""{"ok": true}""")
             }
     }
+
+    @Test
+    fun `should expose a debugging port`() {
+        assertThat(exposedServicePort(KnownServices.DocumentApi, 5005)).isGreaterThan(0)
+    }
 }

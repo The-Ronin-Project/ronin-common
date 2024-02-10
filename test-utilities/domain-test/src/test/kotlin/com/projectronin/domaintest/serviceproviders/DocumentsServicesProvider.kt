@@ -35,6 +35,8 @@ class DocumentsServicesProvider : DomainTestServicesProvider {
             withAuth("1.0.39")
             withGateway("1.0.25")
             withProductEngineeringService(KnownServices.DocumentApi, "2.0.16") {
+                withDebugging(false)
+                withCoverage()
                 dependsOnMySQLDatabase("document_api")
                 dependsOnKafka(
                     documentEventsTopic,
