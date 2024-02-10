@@ -49,11 +49,9 @@ class RetryTest {
         val result = retry<Int> {
             maxAttempts(10)
                 .waitDuration(Duration.ofMillis(10))
+                .retryOnResult { it < 10 }
         }.executeCatchingWithType {
             tries += 1
-            if (tries < 10) {
-                throw IllegalStateException("!")
-            }
             tries
         }
         assertThat(result.isSuccess).isTrue()

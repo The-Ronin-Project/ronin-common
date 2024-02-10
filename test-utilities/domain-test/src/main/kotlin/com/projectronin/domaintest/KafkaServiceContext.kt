@@ -9,6 +9,9 @@ import org.testcontainers.containers.Network
 import org.testcontainers.utility.DockerImageName
 import java.util.Properties
 
+/**
+ * Used to set up a Kafka service.  See [DomainTestSetupContext.withKafka].
+ */
 class KafkaServiceContext private constructor(private val network: Network) : DomainTestContainerContext {
 
     companion object {
@@ -37,10 +40,16 @@ class KafkaServiceContext private constructor(private val network: Network) : Do
         _instance = this
     }
 
+    /**
+     * Adds a topic that will be added to the container after it is started.
+     */
     fun topic(name: String, partitions: Int = 1, replication: Int = 1) {
         topics += Topic(name, partitions, replication)
     }
 
+    /**
+     * Adds a list of topics by name only to the container after it is started.
+     */
     fun topics(vararg name: String) {
         name.forEach { topic(it) }
     }
@@ -51,14 +60,14 @@ class KafkaServiceContext private constructor(private val network: Network) : Do
                 .withNetwork(network)
                 .withNetworkAliases(SupportingServices.Kafka.containerName)
                 .withListener { "${SupportingServices.Kafka.containerName}:19092" }
-                // .withEnv("KAFKA_LISTENERS", "PLAINTEXT://0.0.0.0:9093,BROKER://0.0.0.0:9092,INTERNAL://kafka:19092")
-                // .withEnv("KAFKA_LISTENER_SECURITY_PROTOCOL_MAP", "BROKER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT")
-                // .withEnv("KAFKA_ADVERTISED_LISTENERS", "PLAINTEXT://localhost:9093,BROKER://localhost:9092,INTERNAL://kafka:19092")
                 .withExposedPorts(9093, 19092)
         }
         return container
     }
 
+    /**
+     * In this case we use the bootstrap to create the topics.
+     */
     override fun bootstrap(container: GenericContainer<*>) {
         val newTopics = topics.map { NewTopic(it.name, it.partitions, it.replication.toShort()) }
             .takeUnless { it.isEmpty() }
@@ -94,18 +103,55 @@ class KafkaServiceContext private constructor(private val network: Network) : Do
     )
 }
 
+/**
+ * Allows you to execute a block in your tests that has access to a Kafka [AdminClient]
+ */
 fun withKafkaAdminClient(block: AdminClient.() -> Unit) {
     KafkaServiceContext.instance.withAdminClient(block)
 }
 
+/**
+ * The external port of the kafka service
+ */
 val kafkaPort: Int
     get() = KafkaServiceContext.instance.port
+
+/**
+ * The external host of the kafka service.  For when you want to access it in
+ * your tests, not in your services.
+ */
 val kafkaExternalHost: String
     get() = KafkaServiceContext.instance.host
+
+/**
+ * A kafka bootstrap servers string for use in your tests, not in your services.
+ */
 val kafkaExternalBootstrapServers: String
     get() = KafkaServiceContext.instance.bootstrapServers
+
+/**
+ * The kafka bootstrap servers string for use _inside_ your services.  For example:
+ * ```
+ * withProductEngineeringService(KnownServices.DocumentApi, "2.0.16") {
+ *     configYaml(
+ *         """
+ *             spring:
+ *               config:
+ *                 import: classpath:application.yml
+ *             ---
+ *               kafka:
+ *                 bootstrap-servers: $kafkaInternalBootstrapServers
+ *                 security-protocol: PLAINTEXT
+ *         """.trimIndent()
+ *     )
+ * }
+ * ```
+ */
 val kafkaInternalBootstrapServers: String
     get() = "PLAINTEXT://kafka:19092"
 
+/**
+ * A set of the topics that the context knows about.
+ */
 val registeredTopics: Set<String>
     get() = KafkaServiceContext.instance.topicNames

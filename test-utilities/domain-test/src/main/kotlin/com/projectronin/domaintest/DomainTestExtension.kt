@@ -7,6 +7,15 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ExtensionContext.Store.CloseableResource
 
+/**
+ * The Junit5 test extension that powers the domain tests.  Use with:
+ * ```
+ * @ExtendWith(DomainTestExtension::class)
+ * ```
+ *
+ * Requires that your test suite has a single class that implements [DomainTestServicesProvider].  Classpath
+ * scanning will be used to find it.  A single instance of this will be used for all tests in the suite.
+ */
 open class DomainTestExtension : BeforeAllCallback, CloseableResource {
 
     private val testContext = DomainTestSetupContext()

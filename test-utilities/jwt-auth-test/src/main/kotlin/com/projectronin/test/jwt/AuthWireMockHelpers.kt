@@ -236,6 +236,9 @@ class WireMockServerContext(val rsaKey: RSAKey, val issueRootUri: String, val is
         return this
     }
 
+    /**
+     * Creates a simple M2M token provider in the wiremock service.
+     */
     fun withM2MTokenProvider(token: String, issuerPath: String = "", scope: List<String> = emptyList(), bodyMatcher: ContentPattern<*>? = null) {
         stubs += createM2MTokenProvider(token, issuerPath, scope, bodyMatcher)
     }

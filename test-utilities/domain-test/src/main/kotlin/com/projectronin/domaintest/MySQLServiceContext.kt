@@ -7,6 +7,9 @@ import org.testcontainers.containers.Network
 import java.sql.DriverManager
 import java.util.UUID
 
+/**
+ * A context for starting a MySQL service.  See [DomainTestSetupContext.withMySQL].
+ */
 @Suppress("SqlNoDataSourceInspection")
 class MySQLServiceContext private constructor(private val network: Network, val rootPassword: String = "root") : DomainTestContainerContext {
 
@@ -36,8 +39,14 @@ class MySQLServiceContext private constructor(private val network: Network, val 
         _instance = this
     }
 
-    fun withDatabase(dbName: String, username: String, password: String) {
-        dbs += DbConfig(dbName, username, password)
+    /**
+     * Adds a database/username/password triple to be created after the container starts.  Will throw an exception
+     * if it finds a duplicate (defined as same dbName or same username but where all three values do not match)
+     */
+    fun withDatabase(dbName: String, username: String = dbName, password: String = dbName) {
+        val cfg = DbConfig(dbName, username, password)
+        assert(!dbs.any { (it.dbName == dbName || it.username == username) && it != cfg }) { "Found a duplicate db or username to db=$dbName or user=$username" }
+        dbs += cfg
     }
 
     override fun createContainer(): GenericContainer<*> {
@@ -53,6 +62,9 @@ class MySQLServiceContext private constructor(private val network: Network, val 
         return container!!
     }
 
+    /**
+     * Creates all the DBs and users.
+     */
     override fun bootstrap(container: GenericContainer<*>) {
         DriverManager.getConnection("jdbc:mysql://root:$rootPassword@localhost:${container.getMappedPort(3306)}").use { conn ->
             dbs.forEach { db ->
@@ -80,16 +92,43 @@ class MySQLServiceContext private constructor(private val network: Network, val 
     internal data class DbConfig(val dbName: String, val username: String, val password: String)
 }
 
+/**
+ * Gets a JDBC URI for use inside your services.  Like:
+ * ```
+ * withProductEngineeringService(KnownServices.DocumentApi, "2.0.16") {
+ *     configYaml(
+ *         """
+ *             spring:
+ *               config:
+ *                 import: classpath:application.yml
+ *             ---
+ *             spring:
+ *               datasource:
+ *                 url: ${internalJdbcUrlFor("document_api")}
+ *               liquibase:
+ *                 url: ${internalJdbcUrlFor("document_api")}
+ *                 enabled: true
+ *         """.trimIndent()
+ *     )
+ * }
+ * ```
+ */
 fun internalJdbcUrlFor(dbName: String): String {
     val db = MySQLServiceContext.instance.findDb(dbName)
     return "jdbc:mysql://${db.username}:${db.password}@${SupportingServices.MySql.containerName}:3306/$dbName?createDatabaseIfNotExist=true"
 }
 
+/**
+ * A JDBC URI for outside your services, in your tests.  You can use it to connect any client to DB.  But, prefer [DomainTestContext.withDatabase]
+ */
 fun externalJdbcUrlFor(dbName: String): String {
     val db = MySQLServiceContext.instance.findDb(dbName)
     return "jdbc:mysql://${db.username}:${db.password}@localhost:$externalMySqlPort/$dbName?createDatabaseIfNotExist=true"
 }
 
+/**
+ * The port of the MySQL service for use outside your services, in your tests.  Probably not very useful on its own. See [DomainTestContext.withDatabase].
+ */
 val externalMySqlPort: Int
     get() {
         val container = MySQLServiceContext.instance.container
@@ -99,5 +138,12 @@ val externalMySqlPort: Int
         return container.getMappedPort(3306)
     }
 
+/**
+ * Retrieves the usernmae for the given DB.  Probably not very useful on its own.
+ */
 fun usernameFor(dbName: String): String = MySQLServiceContext.instance.findDb(dbName).username
+
+/**
+ * Retrieves the password for the given DB.  Probably not very useful on its own.
+ */
 fun passwordFor(dbName: String): String = MySQLServiceContext.instance.findDb(dbName).password

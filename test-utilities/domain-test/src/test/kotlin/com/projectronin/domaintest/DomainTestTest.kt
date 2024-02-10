@@ -16,6 +16,7 @@ import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.io.ByteArrayOutputStream
@@ -25,27 +26,25 @@ import java.net.HttpURLConnection
 class DomainTestTest {
 
     @Test
-    fun `should allow building a new http client and removing it`() {
-        runBlocking {
-            coDomainTest {
-                var intercepted: Boolean = false
+    fun `should allow building a new http client and removing it`() = runBlocking {
+        coDomainTest {
+            var intercepted: Boolean = false
 
-                buildHttpClient(OkHttpClient.Builder()) {
-                    addInterceptor {
-                        intercepted = true
-                        it.proceed(it.request())
-                    }
+            buildHttpClient(OkHttpClient.Builder()) {
+                addInterceptor {
+                    intercepted = true
+                    it.proceed(it.request())
                 }
-
-                request("auth", "/actuator/info").execute {}
-                assertThat(intercepted).isTrue()
-
-                intercepted = false
-
-                clearHttpClient()
-                request("auth", "/actuator/info").execute {}
-                assertThat(intercepted).isFalse()
             }
+
+            request("auth", "/actuator/info").execute {}
+            assertThat(intercepted).isTrue()
+
+            intercepted = false
+
+            clearHttpClient()
+            request("auth", "/actuator/info").execute {}
+            assertThat(intercepted).isFalse()
         }
     }
 
@@ -214,5 +213,15 @@ class DomainTestTest {
     @Test
     fun `should expose a debugging port`() {
         assertThat(exposedServicePort(KnownServices.DocumentApi, 5005)).isGreaterThan(0)
+    }
+
+    @Test
+    fun `should correctly manage DB additions`() {
+        // this one should be fine
+        MySQLServiceContext.instance.withDatabase("document_api")
+        assertThatThrownBy { MySQLServiceContext.instance.withDatabase("document_api", "foo") }
+            .isInstanceOf(AssertionError::class.java)
+        assertThatThrownBy { MySQLServiceContext.instance.withDatabase("foo", "assets") }
+            .isInstanceOf(AssertionError::class.java)
     }
 }

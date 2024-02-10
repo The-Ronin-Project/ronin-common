@@ -3,6 +3,7 @@ package com.projectronin.domaintest.serviceproviders
 import com.projectronin.domaintest.DomainTestServicesProvider
 import com.projectronin.domaintest.DomainTestSetupContext
 import com.projectronin.domaintest.KnownServices
+import com.projectronin.domaintest.authServiceIssuer
 import com.projectronin.domaintest.internalJdbcUrlFor
 import com.projectronin.domaintest.internalOidcIssuer
 import com.projectronin.domaintest.kafkaInternalBootstrapServers
@@ -25,27 +26,26 @@ class DocumentsServicesProvider : DomainTestServicesProvider {
         val tempFhirEventsTopic = "oci.us-phoenix-1.document-data.temp-fhir-events.v1"
     }
 
-    override fun configurer(): DomainTestSetupContext.() -> Unit {
-        return {
-            withMySQL()
-            withKafka()
-            withWireMock {
-                withM2MSupport()
-            }
-            withAuth("1.0.39")
-            withGateway("1.0.25")
-            withProductEngineeringService(KnownServices.DocumentApi, "2.0.16") {
-                withDebugging(false)
-                withCoverage()
-                dependsOnMySQLDatabase("document_api")
-                dependsOnKafka(
-                    documentEventsTopic,
-                    documentsDlqTopic,
-                    tenantTopic
-                )
-                dependsOnWireMock()
-                configYaml(
-                    """
+    override fun configurer(): DomainTestSetupContext.() -> Unit = {
+        withMySQL()
+        withKafka()
+        withWireMock {
+            withM2MSupport()
+        }
+        withAuth("1.0.39")
+        withGateway("1.0.25")
+        withProductEngineeringService(KnownServices.DocumentApi, "2.0.16") {
+            withDebugging(false)
+            withCoverage()
+            dependsOnMySQL("document_api")
+            dependsOnKafka(
+                documentEventsTopic,
+                documentsDlqTopic,
+                tenantTopic
+            )
+            dependsOnWireMock()
+            configYaml(
+                """
                     spring:
                       config:
                         import: classpath:application.yml
@@ -59,7 +59,7 @@ class DocumentsServicesProvider : DomainTestServicesProvider {
                     ronin:
                       auth:
                         issuers:
-                          - http://auth:8080
+                          - ${authServiceIssuer()}
                           - ${oidcIssuer()}
                       product:
                         document-api:
@@ -72,22 +72,22 @@ class DocumentsServicesProvider : DomainTestServicesProvider {
                       kafka:
                         bootstrap-servers: $kafkaInternalBootstrapServers
                         security-protocol: PLAINTEXT
-                    """.trimIndent()
-                )
-            }
-            withProductEngineeringService(KnownServices.DocumentData, "2.0.12") {
-                dependsOnMySQLDatabase("document_data")
-                dependsOnKafka(
-                    assetsEventTopic,
-                    ehrdaDocumentReferenceTopic,
-                    documentsDlqTopic,
-                    tenantTopic,
-                    documentEventsTopic,
-                    assetsCommandTopic,
-                    tempFhirEventsTopic
-                )
-                configYaml(
-                    """
+                """.trimIndent()
+            )
+        }
+        withProductEngineeringService(KnownServices.DocumentData, "2.0.12") {
+            dependsOnMySQL("document_data")
+            dependsOnKafka(
+                assetsEventTopic,
+                ehrdaDocumentReferenceTopic,
+                documentsDlqTopic,
+                tenantTopic,
+                documentEventsTopic,
+                assetsCommandTopic,
+                tempFhirEventsTopic
+            )
+            configYaml(
+                """
                     spring:
                       config:
                         import: classpath:application.yml
@@ -117,20 +117,20 @@ class DocumentsServicesProvider : DomainTestServicesProvider {
                           topic-document-events: "$documentEventsTopic"
                           topic-asset-commands: "$assetsCommandTopic"
                           topic-temp-ehr-document-events: "$tempFhirEventsTopic"
-                    """.trimIndent()
-                )
-            }
-            withProductEngineeringService(KnownServices.Assets, "2.0.12") {
-                dependsOnMySQLDatabase("assets")
-                dependsOnKafka(
-                    assetsCommandTopic,
-                    assetsEventTopic,
-                    tenantTopic,
-                    documentsDlqTopic
-                )
-                dependsOnWireMock()
-                configYaml(
-                    """
+                """.trimIndent()
+            )
+        }
+        withProductEngineeringService(KnownServices.Assets, "2.0.12") {
+            dependsOnMySQL("assets")
+            dependsOnKafka(
+                assetsCommandTopic,
+                assetsEventTopic,
+                tenantTopic,
+                documentsDlqTopic
+            )
+            dependsOnWireMock()
+            configYaml(
+                """
                     spring:
                       config:
                         import: classpath:application.yml
@@ -169,9 +169,8 @@ class DocumentsServicesProvider : DomainTestServicesProvider {
                           url: ${internalOidcIssuer()}
                           clientId: test
                           clientSecret: test
-                    """.trimIndent()
-                )
-            }
+                """.trimIndent()
+            )
         }
     }
 }

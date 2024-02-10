@@ -17,6 +17,9 @@ import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.Network
 import org.wiremock.integrations.testcontainers.WireMockContainer
 
+/**
+ * Starts up a WireMock service.  See [DomainTestSetupContext.withWireMock].
+ */
 class WireMockServiceContext private constructor(private val network: Network) : DomainTestContainerContext {
 
     companion object {
@@ -54,6 +57,11 @@ class WireMockServiceContext private constructor(private val network: Network) :
     fun generateToken(rsaKey: RSAKey, claimSetCustomizer: JWTClaimsSet.Builder.() -> JWTClaimsSet.Builder = { this }): String =
         com.projectronin.test.jwt.generateToken(rsaKey, oidcIssuer(), claimSetCustomizer)
 
+    /**
+     * Adds a _very basic_ OIDC endpoint such that a JWT validator can retrieve endpoint names, especially (really, only) `issuer` and `jwks_uri`.
+     *
+     * This allows you to validate JWT tokens _without_ setting up a full auth server.
+     */
     fun withOIDCSupport() {
         if (!oidcEnabled) {
             oidcEnabled = true
@@ -130,6 +138,9 @@ class WireMockServiceContext private constructor(private val network: Network) :
         }
     }
 
+    /**
+     * Enables a simple mock `/oauth/token` endpoint for M2M token retrieval.  Also enables OIDC.
+     */
     fun withM2MSupport(vararg scope: String) {
         if (!m2mEnabled) {
             m2mEnabled = true
@@ -187,19 +198,35 @@ class WireMockServiceContext private constructor(private val network: Network) :
         get() = container.getMappedPort(8080)
 }
 
+/**
+ * The wiremock server as seen from other services.
+ */
 fun internalWiremockUrl(path: String): String = "http://wiremock:8080$path"
 
+/**
+ * The wiremock server as seen from your tests, not your services.
+ */
 fun externalWiremockUrl(path: String): String = "http://localhost:${WireMockServiceContext.instance.port}$path"
 
+/**
+ * The wiremock port as seen from your tests, not your services.
+ */
 val externalWiremockPort: Int
     get() = WireMockServiceContext.instance.port
 
-fun externalOidcIssuer(): String = "http://localhost:${WireMockServiceContext.instance.port}${WireMockServiceContext.instance.oidcIssuerPath()}"
-
+/**
+ * The LOCATION of the OIDC configs, as seen from your services, not your tests.
+ */
 fun internalOidcIssuer(): String = "http://wiremock:8080${WireMockServiceContext.instance.oidcIssuerPath()}"
 
+/**
+ * The issuer string that will appear _in_ the OIDC configs.
+ */
 fun oidcIssuer(): String = WireMockServiceContext.instance.oidcIssuer()
 
+/**
+ * Can be used to reset the wiremock stubs but _retain_ stubs related to M2M and OIDC
+ */
 fun resetWiremock() {
     WireMockServiceContext.instance.reset()
 }

@@ -21,7 +21,7 @@ class ContractTestProvider : ContractTestServicesProvider {
                 withOIDCSupport()
             }
             withServiceUnderTest(libFile) {
-                dependsOnMySQLDatabase("blueprint")
+                dependsOnMySQL("blueprint")
                 dependsOnWireMock()
                 configYaml(
                     """

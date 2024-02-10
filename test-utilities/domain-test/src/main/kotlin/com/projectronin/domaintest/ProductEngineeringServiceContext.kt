@@ -11,6 +11,9 @@ import java.lang.management.ManagementFactory
 import java.time.Duration
 import java.util.UUID
 
+/**
+ * Context for a single PE service.  See [DomainTestSetupContext.withProductEngineeringService].  Specific useful methods are described here.
+ */
 class ProductEngineeringServiceContext internal constructor(
     private val imageName: String,
     private val version: String,
@@ -24,7 +27,7 @@ class ProductEngineeringServiceContext internal constructor(
     }
 
     private val applicationRunDirectory = testRunDirectory.resolve(serviceName).also { it.mkdirs() }
-    private val _dependencies = mutableSetOf<String>()
+    private val _dependencies = mutableSetOf<DomainTestContainer>()
     private var extraConfig = mutableListOf<GenericContainer<*>.() -> GenericContainer<*>>({ this })
     private val activeSpringProfiles = mutableListOf("local", "domaintest")
     private var attemptCoverage: Boolean = false
@@ -46,7 +49,7 @@ class ProductEngineeringServiceContext internal constructor(
         f
     }
 
-    override val dependencies: Set<String>
+    override val dependencies: Set<DomainTestContainer>
         get() = _dependencies.toSet()
 
     private var configPairProvider: () -> Pair<String, String>? = {
@@ -73,12 +76,80 @@ class ProductEngineeringServiceContext internal constructor(
         )
     }
 
+    /**
+     * Provide the contents of the `application.yml` file that the service will bootstrap with.  It's probably useful to use a dynamic string rather
+     * than the contents of a file here, because no replacement/manipulation is done by this method.  A full example might be like the below.  Note
+     * all the inclusions of different service locations, topic names, etc.  Note also that this string is provided eagerly, so if you need for some
+     * reason to access a value that isn't known until after other services start, that will fail here.  Use [configYamlProvider] if that's what you need.
+     *
+     * ```
+     * withProductEngineeringService(KnownServices.DocumentApi, "2.0.16") {
+     *     configYaml(
+     *         """
+     *             spring:
+     *               config:
+     *                 import: classpath:application.yml
+     *             ---
+     *             spring:
+     *               datasource:
+     *                 url: ${internalJdbcUrlFor("document_api")}
+     *               liquibase:
+     *                 url: ${internalJdbcUrlFor("document_api")}
+     *                 enabled: true
+     *             ronin:
+     *               auth:
+     *                 issuers:
+     *                   - ${authServiceIssuer()}
+     *                   - ${oidcIssuer()}
+     *               product:
+     *                 document-api:
+     *                   topic-document-events: "$documentEventsTopic"
+     *                   topic-dlq: "$documentsDlqTopic"
+     *                   topic-tenants: "$tenantTopic"
+     *                   default-page-limit: 2
+     *                   registry-uuid: "765b49c5-dff6-4fd9-9809-4c03fd9beb3a"
+     *                   registry-version: 4
+     *               kafka:
+     *                 bootstrap-servers: $kafkaInternalBootstrapServers
+     *                 security-protocol: PLAINTEXT
+     *         """.trimIndent()
+     *     )
+     * }
+     * ```
+     */
     fun configYaml(
         @Language("yaml") yaml: String
     ) {
         configPairProvider = { Pair("yml", yaml) }
     }
 
+    /**
+     * Provide the contents of the `application.properties` file that the service will bootstrap with  Please use the YAML ones.  They're better..  It's probably useful to use a dynamic string rather
+     * than the contents of a file here, because no replacement/manipulation is done by this method.  A full example might be like the below.  Note
+     * all the inclusions of different service locations, topic names, etc.  Note also that this string is provided eagerly, so if you need for some
+     * reason to access a value that isn't known until after other services start, that will fail here.  Use [configPropertiesProvider] if that's what you need.
+     *
+     * ```
+     * withProductEngineeringService(KnownServices.DocumentApi, "2.0.16") {
+     *     configProperties(
+     *         """
+     *             spring.datasource.url=${internalJdbcUrlFor("document_api")}
+     *             spring.liquibase.url=${internalJdbcUrlFor("document_api")}
+     *             spring.liquibase.enabled=true
+     *             ronin.auth.issuers=${authServiceIssuer()},${oidcIssuer()}
+     *             ronin.product.document-api.topic-document-events=$documentEventsTopic
+     *             ronin.product.document-api.topic-dlq=$documentsDlqTopic
+     *             ronin.product.document-api.topic-tenants=$tenantTopic
+     *             ronin.product.document-api.default-page-limit=2
+     *             ronin.product.document-api.registry-uuid=765b49c5-dff6-4fd9-9809-4c03fd9beb3a
+     *             ronin.product.document-api.registry-version=4
+     *             ronin.kafka.bootstrap-servers=$kafkaInternalBootstrapServers
+     *             ronin.kafka.security-protocol=PLAINTEXT
+     *         """.trimIndent()
+     *     )
+     * }
+     * ```
+     */
     @Deprecated("Use configYaml instead")
     fun configProperties(
         @Language("properties") properties: String
@@ -86,12 +157,84 @@ class ProductEngineeringServiceContext internal constructor(
         configPairProvider = { Pair("properties", properties) }
     }
 
+    /**
+     * Provide the contents of the `application.yml` file that the service will bootstrap with.  It's probably useful to use a dynamic string rather
+     * than the contents of a file here, because no replacement/manipulation is done by this method.  A full example might be like the below.  Note
+     * all the inclusions of different service locations, topic names, etc. This is provided lazily, so referring to ports and URLs that are produced
+     * after dependent services are started (generally the externally available ones) is possible.  Be aware, though, that this service is running
+     * in a container, so it can't _access_ other services at `localhost`
+     *
+     * ```
+     * withProductEngineeringService(KnownServices.DocumentApi, "2.0.16") {
+     *     configYamlProvider {
+     *         // language=yaml
+     *         """
+     *             spring:
+     *               config:
+     *                 import: classpath:application.yml
+     *             ---
+     *             spring:
+     *               datasource:
+     *                 url: ${internalJdbcUrlFor("document_api")}
+     *               liquibase:
+     *                 url: ${internalJdbcUrlFor("document_api")}
+     *                 enabled: true
+     *             ronin:
+     *               auth:
+     *                 issuers:
+     *                   - ${authServiceIssuer()}
+     *                   - ${oidcIssuer()}
+     *               product:
+     *                 document-api:
+     *                   topic-document-events: "$documentEventsTopic"
+     *                   topic-dlq: "$documentsDlqTopic"
+     *                   topic-tenants: "$tenantTopic"
+     *                   default-page-limit: 2
+     *                   registry-uuid: "765b49c5-dff6-4fd9-9809-4c03fd9beb3a"
+     *                   registry-version: 4
+     *               kafka:
+     *                 bootstrap-servers: $kafkaInternalBootstrapServers
+     *                 security-protocol: PLAINTEXT
+     *         """.trimIndent()
+     *     }
+     * }
+     * ```
+     */
     fun configYamlProvider(
         provider: () -> String
     ) {
         configPairProvider = { Pair("yml", provider()) }
     }
 
+    /**
+     * Provide the contents of the `application.properties` file that the service will bootstrap with  Please use the YAML ones.  They're better..  It's probably useful to use a dynamic string rather
+     * than the contents of a file here, because no replacement/manipulation is done by this method.  A full example might be like the below.  Note
+     * all the inclusions of different service locations, topic names, etc.  This is provided lazily, so referring to ports and URLs that are produced
+     * after dependent services are started (generally the externally available ones) is possible.  Be aware, though, that this service is running
+     * in a container, so it can't _access_ other services at `localhost`
+     *
+     * ```
+     * withProductEngineeringService(KnownServices.DocumentApi, "2.0.16") {
+     *     configPropertiesProvider {
+     *         // language=properties
+     *         """
+     *             spring.datasource.url=${internalJdbcUrlFor("document_api")}
+     *             spring.liquibase.url=${internalJdbcUrlFor("document_api")}
+     *             spring.liquibase.enabled=true
+     *             ronin.auth.issuers=${authServiceIssuer()},${oidcIssuer()}
+     *             ronin.product.document-api.topic-document-events=$documentEventsTopic
+     *             ronin.product.document-api.topic-dlq=$documentsDlqTopic
+     *             ronin.product.document-api.topic-tenants=$tenantTopic
+     *             ronin.product.document-api.default-page-limit=2
+     *             ronin.product.document-api.registry-uuid=765b49c5-dff6-4fd9-9809-4c03fd9beb3a
+     *             ronin.product.document-api.registry-version=4
+     *             ronin.kafka.bootstrap-servers=$kafkaInternalBootstrapServers
+     *             ronin.kafka.security-protocol=PLAINTEXT
+     *         """.trimIndent()
+     *     }
+     * }
+     * ```
+     */
     @Deprecated("Use configYaml instead")
     fun configPropertiesProvider(
         provider: () -> String
@@ -99,46 +242,84 @@ class ProductEngineeringServiceContext internal constructor(
         configPairProvider = { Pair("properties", provider()) }
     }
 
+    /**
+     * Removes any configuration, including the default one.  You probably don't need this, but there might be a case where the jar-included one
+     * is enough.  (Removes both yaml or properties, really, whichever is currently configured).
+     */
     fun withoutConfigYaml() {
         configPairProvider = { null }
     }
 
+    /**
+     * Adds a lambda that can operate on the actual container instance.  This is useful if you need to (for instance) map additional configs or files
+     * into the container, set environment variables, etc.
+     */
     fun extraConfiguration(block: GenericContainer<*>.() -> GenericContainer<*>) {
         extraConfig += block
     }
 
-    fun dependsOnMySQL() {
-        _dependencies += SupportingServices.MySql.containerName
+    /**
+     * Declares that this service depends on MySQL being started first.  You need this to make sure that that MySQL starts before your service.
+     * Also you can supply a DB name here, which will cause MySQL to create that DB on startup.  It will throw an exception if this is a duplicate DB or USER.
+     * Fails if mysql not previously defined with [DomainTestSetupContext.withMySQL]
+     */
+    fun dependsOnMySQL(dbName: String? = null, username: String? = null, password: String? = null) {
+        _dependencies += SupportingServices.MySql
+        dbName?.let {
+            MySQLServiceContext.instance.withDatabase(it, username ?: it, password ?: it)
+        }
     }
 
-    fun dependsOnMySQLDatabase(dbName: String, username: String = dbName, password: String = dbName) {
-        dependsOnMySQL()
-        MySQLServiceContext.instance.withDatabase(dbName, username, password)
-    }
-
+    /**
+     * Declares that this service depends on kafka.  Will also create the given topics on kafka start.
+     * Fails if kafka not previously defined with [DomainTestSetupContext.withKafka]
+     */
     fun dependsOnKafka(vararg topic: String) {
-        _dependencies += SupportingServices.Kafka.containerName
+        _dependencies += SupportingServices.Kafka
         KafkaServiceContext.instance.topics(*topic)
     }
 
+    /**
+     * Declares that this service depends on WireMock.
+     * Fails if wiremock not previously defined with [DomainTestSetupContext.withWireMock]
+     */
     fun dependsOnWireMock() {
-        _dependencies += SupportingServices.Wiremock.containerName
+        _dependencies += SupportingServices.Wiremock
     }
 
+    /**
+     * Adds a list of spring profiles to the default (which is `[local,domaintest]`)
+     */
     fun withAdditionalActiveSpringProfiles(vararg profile: String) {
         activeSpringProfiles += profile
     }
 
+    /**
+     * Overrides the default spring profiles with the given ones.
+     */
     fun withActiveSpringProfiles(vararg profile: String) {
         activeSpringProfiles.clear()
         activeSpringProfiles += profile
     }
 
+    /**
+     * Enables debugging of the container.  This exposes a port mapped to `5005` and adds the agentlib arguments for debugging.
+     * You'll need to get the port from `docker ps` or `exposedServicePort(Service, 5005)` to actually attach.  And there will be no
+     * available source code unless this test is inside the service project itself.  Also this will, when the service is started, write
+     * a run configuration to `<project root>/.idea/runConfigurations/service-name.xml`, which idea _should_ pick up as an external
+     * debugging configuration.  Be aware that the port will change every run, so make sure you refresh that file before debugging.
+     *
+     * If you ask for suspend, the service will hang on startup and you will have to attach a debugger before it will start.  Failing to start
+     * will fail the test suite.
+     */
     fun withDebugging(suspend: Boolean = false) {
         enableDebugging = true
         suspendIfDebuggingEnabled = suspend
     }
 
+    /**
+     * Attempt to use the service itself to provide coverage data for jacoco.
+     */
     fun withCoverage() {
         attemptCoverage = true
     }
@@ -270,12 +451,24 @@ class ProductEngineeringServiceContext internal constructor(
     }
 }
 
+/**
+ * Get the external (in the tests, not other services) URI for the given service.
+ */
 fun externalUriFor(serviceName: String): String =
     ProductEngineeringServiceContext.serviceMap[serviceName]?.let { "http://localhost:${it.getMappedPort(8080)}" } ?: throw IllegalStateException("No started service named $serviceName")
 
+/**
+ * Get the external (in the tests, not other services) URI for the given service, using a [ServiceDef]
+ */
 fun externalUriFor(service: ServiceDef): String = externalUriFor(service.serviceName)
 
+/**
+ * Get the external (in the tests, not other services) port that maps to the given port for the service
+ */
 fun exposedServicePort(serviceName: String, port: Int): Int =
     ProductEngineeringServiceContext.serviceMap[serviceName]?.getMappedPort(port) ?: throw IllegalStateException("No started service named $serviceName")
 
+/**
+ * Get the external (in the tests, not other services) port that maps to the given port for the service using a [ServiceDef]
+ */
 fun exposedServicePort(service: ServiceDef, port: Int): Int = exposedServicePort(service.serviceName, port)
