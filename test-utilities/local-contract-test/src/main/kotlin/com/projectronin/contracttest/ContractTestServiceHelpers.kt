@@ -29,7 +29,7 @@ val localContractTestService: String
  * Instantiates a service under test, where you provide a JAR file location and it is executed as if it was a regular PE service.
  *
  * ```
- * withServiceUnderTest(libFile) {
+ * withServiceUnderTest(standardSpringBootJarFile) {
  *     dependsOnMySQL("blueprint")
  *     dependsOnWireMock()
  *     configYaml(
@@ -58,3 +58,11 @@ fun DomainTestSetupContext.withServiceUnderTest(file: File, fn: ProductEngineeri
         }
     }
 }
+
+/**
+ * Tries to find the standard spring boot lib.  Depends on a system property named `ronin.contracttest.libdir` being set by the standard local contract test project.
+ */
+val standardSpringBootJarFile: File
+    get() = (File(System.getProperty("ronin.contracttest.libdir")).listFiles() ?: arrayOf<File>())
+        .firstOrNull { f -> f.extension == "jar" && !f.name.contains("javadoc|sources|plain".toRegex()) }
+        ?: throw IllegalStateException("Couldn't find jar file under ${System.getProperty("ronin.contracttest.libdir")}")

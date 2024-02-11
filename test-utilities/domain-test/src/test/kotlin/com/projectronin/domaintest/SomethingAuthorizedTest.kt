@@ -53,7 +53,6 @@ class SomethingAuthorizedTest {
             }
         )
         request(KnownServices.Auth, udpMappingsPath)
-            .defaultToken()
             .execute {
                 // we only care here that the response was OK
             }
