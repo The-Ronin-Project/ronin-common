@@ -26,15 +26,16 @@ abstract class ServiceDef(
  * if they are part of the API gateway configurations.
  */
 object KnownServices {
-    val Gateway: ServiceDef = object : ServiceDef("api", "prodeng-api-gateway") {}
-    val Auth: ServiceDef = object : ServiceDef("auth", "auth-service", listOf("SERVICES_AUTH_URI", "SERVICES_SEKI_URI")) {}
-    val Assets: ServiceDef = object : ServiceDef("assets", "assets-service", listOf("SERVICES_ASSETS_URI")) {}
-    val Capi: ServiceDef = object : ServiceDef("capi", "prodeng-clinician-api", listOf("SERVICES_CAPI_URI")) {}
-    val Cts: ServiceDef = object : ServiceDef("cts", "clinician-triage-api", listOf("SERVICES_CTS_URI")) {}
-    val Timeline: ServiceDef = object : ServiceDef("timeline", "prodeng-timeline-service", listOf("SERVICES_TIMELINE_URI")) {}
-    val DocumentApi: ServiceDef = object : ServiceDef("document-api", "document-api-service", listOf("SERVICES_DOCUMENT_API_URI")) {}
-    val DocumentData: ServiceDef = object : ServiceDef("document-data", "document-data-service") {}
-    val Tenant: ServiceDef = object : ServiceDef("tenant", "tenant-service", listOf("SERVICES_TENANT_URI")) {}
+    // serviceInfo.version
+    val Gateway: ServiceDef = object : ServiceDef("api", "prodeng-api-gateway") {} // https://api-gateway.prod.projectronin.io/actuator/info
+    val Auth: ServiceDef = object : ServiceDef("auth", "auth-service", listOf("SERVICES_AUTH_URI", "SERVICES_SEKI_URI")) {} // https://auth.stage.projectronin.io/actuator/info
+    val Assets: ServiceDef = object : ServiceDef("assets", "assets-service", listOf("SERVICES_ASSETS_URI")) {} // https://assets.dev.projectronin.io/actuator/info
+    val Capi: ServiceDef = object : ServiceDef("capi", "prodeng-clinician-api", listOf("SERVICES_CAPI_URI")) {} // https://clinician-api.dev.projectronin.io/actuator/info
+    val Cts: ServiceDef = object : ServiceDef("cts", "clinician-triage-api", listOf("SERVICES_CTS_URI")) {} // https://clinician-triage-api.dev.projectronin.io/actuator/info
+    val Timeline: ServiceDef = object : ServiceDef("timeline", "prodeng-timeline-service", listOf("SERVICES_TIMELINE_URI")) {} // https://timeline.dev.projectronin.io/actuator/info
+    val DocumentApi: ServiceDef = object : ServiceDef("document-api", "document-api-service", listOf("SERVICES_DOCUMENT_API_URI")) {} // https://document-api.dev.projectronin.io/actuator/info
+    val DocumentData: ServiceDef = object : ServiceDef("document-data", "document-data-service") {} // https://document-data.dev.projectronin.io/actuator/info
+    val Tenant: ServiceDef = object : ServiceDef("tenant", "tenant-service", listOf("SERVICES_TENANT_URI")) {} // https://tenant.dev.projectronin.io/actuator/info
 
     /**
      * Returns a set of all ServiceDef children of this object.
