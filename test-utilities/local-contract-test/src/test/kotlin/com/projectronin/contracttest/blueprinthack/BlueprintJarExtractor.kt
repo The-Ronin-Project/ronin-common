@@ -38,7 +38,7 @@ object BlueprintJarExtractor {
             .onFailure { e ->
                 val logs = container.logs ?: "no log produced"
                 logger.error { logs }
-                throw RuntimeException("Failed to start: ${logs.substring(0, maxOf(500, logs.length))}", e)
+                throw RuntimeException("Failed to start: ${logs.substring(0, minOf(500, logs.length))}", e)
             }
         container.stop()
         return libDir.resolve("app.jar")
