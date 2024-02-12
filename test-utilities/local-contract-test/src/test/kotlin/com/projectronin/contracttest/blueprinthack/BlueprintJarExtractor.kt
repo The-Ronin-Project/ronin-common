@@ -1,5 +1,6 @@
 package com.projectronin.contracttest.blueprinthack
 
+import mu.KotlinLogging
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
@@ -10,6 +11,8 @@ import java.nio.file.attribute.PosixFilePermissions
 import java.time.Duration
 
 object BlueprintJarExtractor {
+
+    private val logger = KotlinLogging.logger { }
 
     @Suppress("DEPRECATION")
     fun writeBlueprintJarTo(tempDir: File): File {
@@ -33,8 +36,9 @@ object BlueprintJarExtractor {
             .withStartupTimeout(Duration.ofSeconds(300))
         runCatching { container.start() }
             .onFailure { e ->
-                println(container.getLogs())
-                throw e
+                val logs = container.logs
+                logger.error { logs }
+                throw RuntimeException("Failed to start: ${logs?.substring(0, 500)}", e)
             }
         container.stop()
         return libDir.resolve("app.jar")

@@ -7,4 +7,5 @@ dependencies {
     implementation(libs.bundles.testcontainers)
     implementation(libs.junit.api)
     testImplementation(libs.kotlinx.coroutines.core)
+    testImplementation(libs.kotlin.logging)
 }
