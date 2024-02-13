@@ -318,7 +318,12 @@ class DomainTestSetupContext internal constructor() {
                             else -> errFile.appendBytes(frame.bytes)
                         }
                     }
-                container.start()
+                runCatching { container.start() }
+                    .onFailure { e ->
+                        val logs = container.logs ?: "no log produced"
+                        logger.error { logs }
+                        throw RuntimeException("Failed to start: ${logs.substring(0, minOf(500, logs.length))}", e)
+                    }
                 service.container = container
                 service.context.bootstrap(container)
             }
