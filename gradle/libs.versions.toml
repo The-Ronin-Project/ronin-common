@@ -12,6 +12,18 @@ opentracing = "0.33.0"
 resilience4j = "2.0.2"
 spring = "6.0.11"
 spring-security = "6.0.6"
+nimbus-jose = "9.24.4"
+wiremock = "3.3.1"
+okhttp = "4.10.0"
+logback = "1.4.5"
+slf4j = "2.0.6"
+mysql = "8.0.33"
+hazelcast = "5.3.6"
+jetbrains-annotations = "24.1.0"
+testcontainers = "1.19.4"
+junit = "5.10.1"
+classgraph = "4.8.165"
+testcontainers-wiremock = "1.0-alpha-13"
 
 [libraries]
 contract-messaging-tenant-v1 = { module = "com.projectronin.contract.event.tenant:contract-messaging-tenant-v1", version.ref = "contract-messaging-tenant-v1" }
@@ -42,14 +54,41 @@ spring-core = { module = "org.springframework:spring-core", version.ref = "sprin
 spring-context = { module = "org.springframework:spring-context", version.ref = "spring" }
 spring-security-core = { module = "org.springframework.security:spring-security-core", version.ref = "spring-security" }
 
+nimbus-jose-jwt =  { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbus-jose" }
+
+mysql-connector = { module = "com.mysql:mysql-connector-j", version.ref="mysql" }
+
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+logback-core = { module = "ch.qos.logback:logback-core", version.ref = "logback" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+
+hazelcast = { module = "com.hazelcast:hazelcast", version.ref = "hazelcast" }
+
+jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
+
+classgraph = { module = "io.github.classgraph:classgraph", version.ref = "classgraph" }
+
 # Test Libraries
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+wiremock = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremock" }
+
+testcontainers-core = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
+testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testcontainers" }
+testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
+testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+
+testcontainers-wiremock = { module = "org.wiremock.integrations.testcontainers:wiremock-testcontainers-module", version.ref = "testcontainers-wiremock" }
+
+junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
 
 [bundles]
 jackson = ["jackson-kotlin", "jackson-datatype-jsr310", "jackson-module-parameterNames"]
 retry = ["resilience4j-kotlin", "resilience4j-retry", "resilience4j-micrometer"]
 circuitbreaker = ["resilience4j-kotlin", "resilience4j-circuitbreaker", "resilience4j-micrometer"]
+testcontainers = ["testcontainers-core", "testcontainers-mysql", "testcontainers-kafka", "testcontainers-junit", "testcontainers-wiremock"]
 
 [plugins]

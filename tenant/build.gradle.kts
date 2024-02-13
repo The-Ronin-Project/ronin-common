@@ -15,6 +15,8 @@ dependencies {
 
     testImplementation(libs.assertj)
     testImplementation(libs.mockk)
+    testImplementation(libs.logback.classic)
+    testImplementation(libs.logback.core)
 }
 
 tasks.test {
