@@ -1,6 +1,7 @@
 package com.projectronin.contracttest.blueprinthack
 
 import mu.KotlinLogging
+import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
@@ -27,11 +28,13 @@ object BlueprintJarExtractor {
         val permissions: FileAttribute<*> = PosixFilePermissions.asFileAttribute(ownerWritable)
         Files.createDirectory(libDir.toPath(), permissions)
 
+        libDir.resolve("test.txt").writeText("some text")
+        
         val container = GenericContainer(DockerImageName.parse("docker-repo.devops.projectronin.io/student-data-service:7ced907ae71fb263d435a38e3d3302681fae9eb1"))
             .withCreateContainerCmdModifier { cmd -> cmd.withEntrypoint("/bin/bash") }
             .withCommand("-c", "cp /app/app.jar /library-output && echo 'completed'")
             // deprecated, but large files crash everything
-            .withFileSystemBind(libDir.absolutePath, "/library-output")
+            .withFileSystemBind(libDir.absolutePath, "/library-output", BindMode.READ_WRITE)
             .waitingFor(Wait.forLogMessage(".*completed.*", 1))
             .withStartupTimeout(Duration.ofSeconds(300))
         runCatching { container.start() }
