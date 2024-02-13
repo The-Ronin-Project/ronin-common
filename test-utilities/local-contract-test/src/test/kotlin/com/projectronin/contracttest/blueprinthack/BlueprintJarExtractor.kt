@@ -29,7 +29,7 @@ object BlueprintJarExtractor {
         Files.createDirectory(libDir.toPath(), permissions)
 
         libDir.resolve("test.txt").writeText("some text")
-        
+
         val container = GenericContainer(DockerImageName.parse("docker-repo.devops.projectronin.io/student-data-service:7ced907ae71fb263d435a38e3d3302681fae9eb1"))
             .withCreateContainerCmdModifier { cmd -> cmd.withEntrypoint("/bin/bash") }
             .withCommand("-c", "cp /app/app.jar /library-output && echo 'completed'")
