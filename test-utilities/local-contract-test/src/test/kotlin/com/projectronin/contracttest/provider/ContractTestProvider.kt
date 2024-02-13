@@ -12,7 +12,7 @@ class ContractTestProvider : ContractTestServicesProvider {
 
     override fun configurer(): DomainTestSetupContext.() -> Unit {
         return {
-            val tempFile = Files.createTempDirectory("blueprint-contract-test").toFile()
+            val tempFile = Files.createTempDirectory(testRunDirectory.toPath(), "blueprint-contract-test").toFile()
             tempFile.deleteOnExit()
             val libFile = BlueprintJarExtractor.writeBlueprintJarTo(tempFile)
 

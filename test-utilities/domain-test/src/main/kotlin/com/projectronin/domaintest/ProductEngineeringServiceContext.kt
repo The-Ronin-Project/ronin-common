@@ -37,7 +37,7 @@ class ProductEngineeringServiceContext internal constructor(
     private val internalCoverageAgentPath = "/coverage/agent.jar"
     private val internalCoverageOutputPath = "/coverage/output/jacoco"
     private val agentJarLocation: File by lazy {
-        val tf = File.createTempFile("coverage-agent", ".jar")
+        val tf = File.createTempFile("coverage-agent", ".jar", testRunDirectory)
         tf.deleteOnExit()
         tf
     }

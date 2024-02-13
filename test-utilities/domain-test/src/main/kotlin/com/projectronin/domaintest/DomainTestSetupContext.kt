@@ -96,13 +96,13 @@ class DomainTestSetupContext internal constructor() {
      * Tries to find the /build directory of your project and builds a `build/test-executions/YYYY-MM-DDTHH-MM-SS-SSSSS
      * directory to contain container logs and configurations.  Look there if you're trying to debug things.
      */
-    private val testRunDirectory: File by lazy {
+    val testRunDirectory: File by lazy {
         val userDir = File(System.getProperty("user.dir"))
         val expectedBuildDir = userDir.resolve("build")
         val parentDirToUse = if (expectedBuildDir.exists()) {
             expectedBuildDir
         } else {
-            val tempDir = Files.createTempDirectory("domain-test-run").toFile()
+            val tempDir = Files.createTempDirectory(userDir.toPath(), "domain-test-run").toFile()
             tempDir.deleteOnExit()
             tempDir
         }
