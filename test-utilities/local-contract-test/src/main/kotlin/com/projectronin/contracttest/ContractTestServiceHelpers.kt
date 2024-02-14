@@ -49,7 +49,7 @@ val localContractTestService: String
  * ```
  */
 fun DomainTestSetupContext.withServiceUnderTest(file: File, fn: ProductEngineeringServiceContext.() -> Unit) {
-    withProductEngineeringService("service", "ronin/base/java-springboot", "1.1.0") {
+    withProductEngineeringService(ServiceUnderTest, "1.1.0") {
         fn(this)
         withCoverage()
         extraConfiguration {
