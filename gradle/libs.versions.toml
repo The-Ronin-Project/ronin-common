@@ -2,7 +2,7 @@
 assertj = "3.23.1"
 contract-messaging-tenant-v1 = "1.0.0"
 coroutines = "1.6.4"
-datadog = "1.21.0"
+datadog = "1.30.0"
 jackson = "2.15.2"
 kafka = "3.2.1"
 kotlinlogging = "3.0.5"
