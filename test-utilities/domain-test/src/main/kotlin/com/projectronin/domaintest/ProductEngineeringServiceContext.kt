@@ -264,7 +264,7 @@ class ProductEngineeringServiceContext internal constructor(
      * Fails if mysql not previously defined with [DomainTestSetupContext.withMySQL]
      */
     fun dependsOnMySQL(dbName: String? = null, username: String? = null, password: String? = null) {
-        _dependencies += SupportingServices.MySql
+        dependsOnSupportingService(SupportingServices.MySql)
         dbName?.let {
             MySQLServiceContext.instance.withDatabase(it, username ?: it, password ?: it)
         }
@@ -275,7 +275,7 @@ class ProductEngineeringServiceContext internal constructor(
      * Fails if kafka not previously defined with [DomainTestSetupContext.withKafka]
      */
     fun dependsOnKafka(vararg topic: String) {
-        _dependencies += SupportingServices.Kafka
+        dependsOnSupportingService(SupportingServices.Kafka)
         KafkaServiceContext.instance.topics(*topic)
     }
 
@@ -284,7 +284,15 @@ class ProductEngineeringServiceContext internal constructor(
      * Fails if wiremock not previously defined with [DomainTestSetupContext.withWireMock]
      */
     fun dependsOnWireMock() {
-        _dependencies += SupportingServices.Wiremock
+        dependsOnSupportingService(SupportingServices.Wiremock)
+    }
+
+    /**
+     * Declares that this service depends on the given supporting service
+     * Fails if wiremock not previously defined with [DomainTestSetupContext.withSupportingService]
+     */
+    fun dependsOnSupportingService(service: DomainTestContainer) {
+        _dependencies += service
     }
 
     /**
