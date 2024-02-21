@@ -47,7 +47,7 @@ class TenantEventStreamTest {
 
     private fun createDeserializer(): Deserializer<RoninEvent<TenantV1Schema>> {
         val configs = mutableMapOf(
-            RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG to "ronin.tenant.tenant.unknown:${TenantV1Schema::class.qualifiedName},ronin.tenant.tenant.create:${TenantV1Schema::class.qualifiedName}"
+            RoninEventDeserializer.RONIN_DESERIALIZATION_TYPES_CONFIG to "ronin.ronin-tenant.tenant.unknown:${TenantV1Schema::class.qualifiedName},ronin.ronin-tenant.tenant.create:${TenantV1Schema::class.qualifiedName}"
         )
         deserializer.configure(configs, false)
 
@@ -64,7 +64,7 @@ class TenantEventStreamTest {
 
     private val createEvent = RoninEvent(
         dataSchema = "https://github.com/projectronin/contract-messaging-tenant/blob/main/src/main/resources/schemas/tenant-v1.schema.json",
-        type = "ronin.tenant.tenant.create",
+        type = "ronin.ronin-tenant.tenant.create",
         source = "ronin-tenant-service",
         resourceId = ResourceId("tenant", tenantId.toString()),
         data = tenantSchema
@@ -72,7 +72,7 @@ class TenantEventStreamTest {
 
     private val updateEvent = RoninEvent(
         dataSchema = "https://github.com/projectronin/contract-messaging-tenant/blob/main/src/main/resources/schemas/tenant-v1.schema.json",
-        type = "ronin.tenant.tenant.update",
+        type = "ronin.ronin-tenant.tenant.update",
         source = "ronin-tenant-service",
         resourceId = ResourceId("tenant", tenantId.toString()),
         data = tenantSchema
@@ -80,7 +80,7 @@ class TenantEventStreamTest {
 
     private val deleteEvent = RoninEvent(
         dataSchema = "https://github.com/projectronin/contract-messaging-tenant/blob/main/src/main/resources/schemas/tenant-v1.schema.json",
-        type = "ronin.tenant.tenant.delete",
+        type = "ronin.ronin-tenant.tenant.delete",
         source = "ronin-tenant-service",
         resourceId = ResourceId("tenant", tenantId.toString()),
         data = tenantSchema
@@ -90,7 +90,7 @@ class TenantEventStreamTest {
     fun `create happy path`() {
         val eventSlot = slot<RoninEvent<TenantV1Schema>>()
         every { eventHandler.create(capture(eventSlot)) } just runs
-        inputTopic.pipeInput("ronin.tenant.tenant.create/$tenantId", createEvent)
+        inputTopic.pipeInput("tenant/$tenantId", createEvent)
         val result = eventSlot.captured
         assertThat(result.data.id).isEqualTo(tenantId.value)
         verify(exactly = 1) { eventHandler.create(any()) }
@@ -101,7 +101,7 @@ class TenantEventStreamTest {
     fun `update happy path`() {
         val eventSlot = slot<RoninEvent<TenantV1Schema>>()
         every { eventHandler.update(capture(eventSlot)) } just runs
-        inputTopic.pipeInput("ronin.tenant.tenant.update/$tenantId", updateEvent)
+        inputTopic.pipeInput("tenant/$tenantId", updateEvent)
         val result = eventSlot.captured
         assertThat(result.data.id).isEqualTo(tenantId.value)
         verify(exactly = 1) { eventHandler.update(any()) }
@@ -112,7 +112,7 @@ class TenantEventStreamTest {
     fun `delete happy path`() {
         val eventSlot = slot<RoninEvent<TenantV1Schema>>()
         every { eventHandler.delete(capture(eventSlot)) } just runs
-        inputTopic.pipeInput("ronin.tenant.tenant.delete/$tenantId", deleteEvent)
+        inputTopic.pipeInput("tenant/$tenantId", deleteEvent)
         val result = eventSlot.captured
         assertThat(result.data.id).isEqualTo(tenantId.value)
         verify(exactly = 1) { eventHandler.delete(any()) }
@@ -123,7 +123,7 @@ class TenantEventStreamTest {
     fun `unknown event type`() {
         val unknownEvent = RoninEvent(
             dataSchema = "https://github.com/projectronin/contract-messaging-tenant/blob/main/src/main/resources/schemas/tenant-v1.schema.json",
-            type = "ronin.tenant.tenant.unknown",
+            type = "ronin.ronin-tenant.tenant.unknown",
             source = "ronin-tenant-service",
             resourceId = ResourceId("tenant", tenantId.toString()),
             data = tenantSchema
@@ -136,10 +136,30 @@ class TenantEventStreamTest {
     }
 
     @Test
+    fun `legacy message type`() {
+        val eventSlot = slot<RoninEvent<TenantV1Schema>>()
+        every { eventHandler.create(capture(eventSlot)) } just runs
+        inputTopic.pipeInput(
+            "ronin.tenant.tenant.create/$tenantId",
+            RoninEvent(
+                dataSchema = "https://github.com/projectronin/contract-messaging-tenant/blob/main/src/main/resources/schemas/tenant-v1.schema.json",
+                type = "ronin.tenant.tenant.create",
+                source = "ronin-tenant-service",
+                resourceId = ResourceId("tenant", tenantId.toString()),
+                data = tenantSchema
+            )
+        )
+        val result = eventSlot.captured
+        assertThat(result.data.id).isEqualTo(tenantId.value)
+        verify(exactly = 1) { eventHandler.create(any()) }
+        assertThat(outputTopic.isEmpty).isTrue()
+    }
+
+    @Test
     fun `exception thrown during handling`() {
         val eventSlot = slot<RoninEvent<TenantV1Schema>>()
         every { eventHandler.create(capture(eventSlot)) } throws Exception("Error happened.")
-        inputTopic.pipeInput("ronin.tenant.tenant.create/$tenantId", createEvent)
+        inputTopic.pipeInput("tenant/$tenantId", createEvent)
         val result = eventSlot.captured
         assertThat(result.data.id).isEqualTo(tenantId.value)
         verify(exactly = 1) { eventHandler.create(any()) }
