@@ -9,9 +9,7 @@ roninSonar {
     coverageExclusions.set(
         listOf(
             "**/test/**",
-            "**/test-utilities/**",
             "**/*testutils/**",
-            "**/contracttest/**",
             "**/*.kts",
             "**/kotlin/dsl/accessors/**",
             "**/kotlin/test/**"
