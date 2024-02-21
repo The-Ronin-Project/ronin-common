@@ -462,13 +462,13 @@ class ProductEngineeringServiceContext internal constructor(
 /**
  * Get the external (in the tests, not other services) URI for the given service.
  */
-fun externalUriFor(serviceName: String): String =
-    ProductEngineeringServiceContext.serviceMap[serviceName]?.let { "http://localhost:${it.getMappedPort(8080)}" } ?: throw IllegalStateException("No started service named $serviceName")
+fun externalUriFor(serviceName: String, path: String = ""): String =
+    ProductEngineeringServiceContext.serviceMap[serviceName]?.let { "http://localhost:${it.getMappedPort(8080)}$path" } ?: throw IllegalStateException("No started service named $serviceName")
 
 /**
  * Get the external (in the tests, not other services) URI for the given service, using a [ServiceDef]
  */
-fun externalUriFor(service: ServiceDef): String = externalUriFor(service.serviceName)
+fun externalUriFor(service: ServiceDef, path: String = ""): String = externalUriFor(service.serviceName, path)
 
 /**
  * Get the external (in the tests, not other services) port that maps to the given port for the service

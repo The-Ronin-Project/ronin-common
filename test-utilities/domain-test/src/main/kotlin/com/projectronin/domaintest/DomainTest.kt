@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.hazelcast.client.HazelcastClient
-import com.hazelcast.client.config.ClientConfig
 import com.nimbusds.jose.jwk.RSAKey
 import com.projectronin.test.jwt.RoninTokenBuilderContext
 import com.projectronin.test.jwt.generateRandomRsa
@@ -18,6 +16,7 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.ResponseBody
+import okhttp3.internal.EMPTY_REQUEST
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -26,6 +25,7 @@ import org.apache.kafka.common.serialization.Serializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
+import org.intellij.lang.annotations.Language
 import java.net.HttpURLConnection
 import java.net.URL
 import java.sql.Connection
@@ -103,57 +103,21 @@ class DomainTestContext : AutoCloseable {
      */
     private var _objectMapper: ObjectMapper? = null
 
-    /**
-     * An RSAKey for token signing that is associated with a mock oauth2 server created by  [WireMockServiceContext.withOIDCSupport].  Used as a fallback for tokens
-     * if you didn't create an auth server via [DomainTestSetupContext.withAuth]
-     */
-    val mockRsaKey: RSAKey by lazy { WireMockServiceContext.instance.rsaKey }
+    private var authData: AuthData = AuthContext.defaultAuthProvider
 
-    /**
-     * An RSAKey extracted from a running auth service created by [DomainTestSetupContext.withAuth].  Used by default if the auth server is running.
-     */
-    val authServiceRsaKey: RSAKey by lazy {
-
-        // this forces auth to instantiate the jwks, which is lazily created
-        request {
-            serviceGet(KnownServices.Auth.serviceName, "/oauth2/jwks")
-        }.execute { }
-
-        val clientConfig = ClientConfig()
-        clientConfig.clusterName = "spring-session-cluster"
-        clientConfig.setProperty("hazelcast.logging.type", "slf4j")
-        clientConfig.networkConfig.addAddress("localhost:${exposedServicePort(KnownServices.Auth, 5701)}")
-
-        val client = HazelcastClient.newHazelcastClient(clientConfig)
-
-        val key: RSAKey = client.getReplicatedMap<String, RSAKey>("rsaKey")["key"]!!
-
-        client.shutdown()
-
-        key
-    }
+    private var defaultService: ServiceDef = KnownServices.Gateway
 
     /**
      * An internal reference to the auth service or mock RSA key.  Used by tokens created with [jwtAuthToken] by default.
      */
-    val rsaKey: RSAKey by lazy {
-        if (ProductEngineeringServiceContext.serviceMap[KnownServices.Auth.serviceName] != null) {
-            authServiceRsaKey
-        } else {
-            mockRsaKey
-        }
-    }
+    val rsaKey: RSAKey
+        get() = authData.rsaKey()(this)
 
     /**
      * Internal reference to the appropriate token issuer.  Used by tokens created with [jwtAuthToken] by default.
      */
-    val issuer: String by lazy {
-        if (ProductEngineeringServiceContext.serviceMap[KnownServices.Auth.serviceName] != null) {
-            authServiceIssuer()
-        } else {
-            oidcIssuer()
-        }
-    }
+    val issuer: String
+        get() = authData.issuer()(this)
 
     /**
      * Gets cached (or creates new) [OkHttpClient] for use in requests.
@@ -179,6 +143,17 @@ class DomainTestContext : AutoCloseable {
             }
             return _objectMapper!!
         }
+
+    /**
+     * Allows you to globally override the default authentication configuration for _this instance of `domainTest` only
+     */
+    fun withAuthData(authData: AuthData) {
+        this.authData = authData
+    }
+
+    fun withDefaultService(service: ServiceDef) {
+        this.defaultService = service
+    }
 
     /**
      * set the token for the session. It will get added to all subsequent [RequestContext.defaultToken] setups.
@@ -212,8 +187,17 @@ class DomainTestContext : AutoCloseable {
     /**
      * Initiate a request with a [ServiceDef].  Like:
      * ```
-     * request {
-     *     serviceGet(KnownServices.Auth, udpMappingsPath)
+     * get(udpMappingsPath) {
+     *     token(token)
+     * }.execute(expectedHttpStatus = HttpURLConnection.HTTP_UNAUTHORIZED) {
+     *     // we only care here that the response was OK
+     * }
+     * post(udpMappingsPath, someUdpMapping) {
+     *     token(token)
+     * }.execute(expectedHttpStatus = HttpURLConnection.HTTP_UNAUTHORIZED) {
+     *     // we only care here that the response was OK
+     * }
+     * get("/foo/bar', service = KnownServices.Assets) {
      *     token(token)
      * }.execute(expectedHttpStatus = HttpURLConnection.HTTP_UNAUTHORIZED) {
      *     // we only care here that the response was OK
@@ -221,28 +205,77 @@ class DomainTestContext : AutoCloseable {
      * ```
      * Uses the [sessionToken] if set.
      */
-    fun request(service: ServiceDef, path: String = "", block: RequestContext.() -> Unit = {}): RequestContext {
+    fun request(
+        path: String,
+        service: ServiceDef = defaultService,
+        block: RequestContext.() -> Unit = {}
+    ): RequestContext {
         val requestContext = RequestContext()
-        requestContext.serviceGet(service, path)
+        requestContext.get(path, service)
         sessionToken?.let { requestContext.defaultToken() }
         block(requestContext)
         return requestContext
     }
 
-    /**
-     * Initiate a request with a service name, like:
-     * ```
-     *  request("auth", udpMappingsPath) {
-     *      token(token)
-     *  }.execute(expectedHttpStatus = HttpURLConnection.HTTP_UNAUTHORIZED) {
-     *      // we only care here that the response was OK
-     *  }
-     * ```
-     * Uses the [sessionToken] if set.
-     */
-    fun request(serviceName: String, path: String = "", block: RequestContext.() -> Unit = {}): RequestContext {
+    fun get(
+        path: String,
+        service: ServiceDef = defaultService,
+        block: RequestContext.() -> Unit = {}
+    ): RequestContext {
         val requestContext = RequestContext()
-        requestContext.serviceGet(serviceName, path)
+        requestContext.get(path, service)
+        sessionToken?.let { requestContext.defaultToken() }
+        block(requestContext)
+        return requestContext
+    }
+
+    fun post(
+        path: String,
+        body: Any,
+        service: ServiceDef = defaultService,
+        block: RequestContext.() -> Unit = {}
+    ): RequestContext {
+        val requestContext = RequestContext()
+        requestContext.post(path, body, service)
+        sessionToken?.let { requestContext.defaultToken() }
+        block(requestContext)
+        return requestContext
+    }
+
+    fun put(
+        path: String,
+        body: Any,
+        service: ServiceDef = defaultService,
+        block: RequestContext.() -> Unit = {}
+    ): RequestContext {
+        val requestContext = RequestContext()
+        requestContext.put(path, body, service)
+        sessionToken?.let { requestContext.defaultToken() }
+        block(requestContext)
+        return requestContext
+    }
+
+    fun patch(
+        path: String,
+        body: Any,
+        service: ServiceDef = defaultService,
+        block: RequestContext.() -> Unit = {}
+    ): RequestContext {
+        val requestContext = RequestContext()
+        requestContext.patch(path, body, service)
+        sessionToken?.let { requestContext.defaultToken() }
+        block(requestContext)
+        return requestContext
+    }
+
+    fun delete(
+        path: String,
+        body: Any? = null,
+        service: ServiceDef = defaultService,
+        block: RequestContext.() -> Unit = {}
+    ): RequestContext {
+        val requestContext = RequestContext()
+        requestContext.delete(path, body, service)
         sessionToken?.let { requestContext.defaultToken() }
         block(requestContext)
         return requestContext
@@ -270,26 +303,6 @@ class DomainTestContext : AutoCloseable {
     }
 
     /**
-     * Make a request to the API gateway, assuming it's started
-     *
-     * ```
-     * gatewayRequest("/foo/bar") {
-     *     token(token)
-     * }.execute(expectedHttpStatus = HttpURLConnection.HTTP_UNAUTHORIZED) {
-     *     // we only care here that the response was OK
-     * }
-     * ```
-     * Uses the [sessionToken] if set.
-     */
-    fun gatewayRequest(path: String, block: RequestContext.() -> Unit = {}): RequestContext {
-        val requestContext = RequestContext()
-        requestContext.serviceGet(KnownServices.Gateway, path)
-        sessionToken?.let { requestContext.defaultToken() }
-        block(requestContext)
-        return requestContext
-    }
-
-    /**
      * Returns a JWT auth token.  See `AuthWireMockHelper.defaultRoninClaims()` for the defaults
      * that get set into it.  You can pass a block that customizes the code, e.g.:
      *
@@ -311,8 +324,8 @@ class DomainTestContext : AutoCloseable {
      *       - ${oidcIssuer()}
      * ```
      */
-    fun jwtAuthToken(block: RoninTokenBuilderContext.() -> Unit = {}): String {
-        return com.projectronin.test.jwt.jwtAuthToken(rsaKey, issuer) {
+    fun jwtAuthToken(overrideKey: RSAKey? = null, block: RoninTokenBuilderContext.() -> Unit = {}): String {
+        return com.projectronin.test.jwt.jwtAuthToken(overrideKey ?: rsaKey, issuer) {
             block(this)
         }
     }
@@ -333,6 +346,16 @@ class DomainTestContext : AutoCloseable {
         return this
     }
 
+    fun Any.asRequestBody(modifyJsonNode: ((JsonNode) -> Unit)? = null): RequestBody =
+        when (this) {
+            is RequestBody -> this
+            else -> objectMapper.writeValueAsString(this).run {
+                objectMapper.readTree(this)
+                    .apply(modifyJsonNode ?: {})
+                    .let { objectMapper.writeValueAsString(it) }
+            }.toRequestBody("application/json".toMediaType())
+        }
+
     /**
      * Convert a contract request class to a RequestBody.  Optionally you can specify a
      * modifyJsonNode block to remove or modify the actual request to test validation etc.
@@ -340,12 +363,7 @@ class DomainTestContext : AutoCloseable {
     fun <T> requestBody(
         request: T,
         modifyJsonNode: (JsonNode) -> Unit = {}
-    ): RequestBody =
-        objectMapper.writeValueAsString(request).run {
-            objectMapper.readTree(this)
-                .apply(modifyJsonNode)
-                .let { objectMapper.writeValueAsString(it) }
-        }.toRequestBody("application/json".toMediaType())
+    ): RequestBody = request?.asRequestBody(modifyJsonNode) ?: EMPTY_REQUEST
 
     /**
      * Returns the body as a string and fails if no body
@@ -433,7 +451,7 @@ class DomainTestContext : AutoCloseable {
         /**
          * Executes a query against [getConnection]
          */
-        fun <T> executeQuery(sql: String, block: (ResultSet) -> T): T {
+        fun <T> executeQuery(@Language("sql") sql: String, block: (ResultSet) -> T): T {
             getDatabaseConnection(dbName).use { conn ->
                 conn.createStatement().use { stmt ->
                     return block(stmt.executeQuery(sql))
@@ -444,7 +462,7 @@ class DomainTestContext : AutoCloseable {
         /**
          * Executes an update against [getConnection]
          */
-        fun executeUpdate(sql: String): Int =
+        fun executeUpdate(@Language("sql") sql: String): Int =
             getDatabaseConnection(dbName).use { conn ->
                 conn.createStatement().use { stmt ->
                     stmt.executeUpdate(sql)
@@ -669,74 +687,45 @@ class DomainTestContext : AutoCloseable {
      * Created by a call to one of the [request] methods.  See those for basic usage.
      */
     inner class RequestContext : RequestExecutor {
-        var builder: Request.Builder = Request.Builder()
+        private var builder: Request.Builder = Request.Builder()
+
+        private fun determineUri(path: String, service: ServiceDef) = path.takeIf { it.startsWith("http") } ?: externalUriFor(service, path)
 
         /**
-         * Configure this request as a GET call to a service by name and path.
+         * Configure this request as a GET call to a service by path, using a predefined ServiceDef, like [KnownServices.Assets]  If "path" is an url, will ignore service.
          */
-        fun serviceGet(serviceName: String, path: String = ""): RequestContext {
-            get("${externalUriFor(serviceName)}$path")
+        fun get(path: String, service: ServiceDef = defaultService): RequestContext {
+            builder = builder.url(determineUri(path, service)).get()
             return this
         }
 
         /**
-         * Configure this request as a GET call to a service by path, using a predefined ServiceDef, like [KnownServices.Assets]
+         * Configure this request as a POST call to a service by path, using a predefined ServiceDef, like [KnownServices.Assets].  If "path" is an url, will ignore service.
          */
-        fun serviceGet(service: ServiceDef, path: String = ""): RequestContext {
-            get("${externalUriFor(service)}$path")
+        fun post(path: String, body: Any, service: ServiceDef = defaultService): RequestContext {
+            builder = builder.url(determineUri(path, service)).post(body.asRequestBody())
             return this
         }
 
         /**
-         * Configure this request as a GET call to the API gateway, assuming it's running.
+         * Configure this request as a DELETE call to a service by name and path.  If "path" is an url, will ignore service.
          */
-        fun gatewayGet(path: String): RequestContext {
-            get("${externalUriFor(KnownServices.Gateway)}$path")
-            return this
+        fun delete(path: String, requestBody: Any? = null, service: ServiceDef = defaultService) {
+            builder = builder.url(determineUri(path, service)).delete(requestBody?.asRequestBody())
         }
 
         /**
-         * Configure this request as a GET call the given URL.
+         * Configure this request as a PUT call to a service by name and path.  If "path" is an url, will ignore service.
          */
-        fun get(url: String): RequestContext {
-            builder = builder
-                .url(url)
-                .get()
-            return this
+        fun put(path: String, requestBody: Any, service: ServiceDef = defaultService) {
+            builder = builder.url(determineUri(path, service)).put(requestBody.asRequestBody())
         }
 
         /**
-         * Configure this request as a POST call to a service by name and path.
+         * Configure this request as a PATCH call to a service by name and path.  If "path" is an url, will ignore service.
          */
-        fun servicePost(serviceName: String, path: String = "", body: RequestBody): RequestContext {
-            post("${externalUriFor(serviceName)}$path", body)
-            return this
-        }
-
-        /**
-         * Configure this request as a POST call to a service by path, using a predefined ServiceDef, like [KnownServices.Assets]
-         */
-        fun servicePost(service: ServiceDef, path: String = "", body: RequestBody): RequestContext {
-            post("${externalUriFor(service)}$path", body)
-            return this
-        }
-
-        /**
-         * Configure this request as a POST call to the API gateway, assuming it's running.
-         */
-        fun gatewayPost(path: String, body: RequestBody): RequestContext {
-            post("${externalUriFor(KnownServices.Gateway)}$path", body)
-            return this
-        }
-
-        /**
-         * Configure this request as a POST call the given URL.
-         */
-        fun post(url: String, body: RequestBody): RequestContext {
-            builder = builder
-                .url(url)
-                .post(body)
-            return this
+        fun patch(path: String, requestBody: Any, service: ServiceDef = defaultService) {
+            builder = builder.url(determineUri(path, service)).patch(requestBody.asRequestBody())
         }
 
         /**

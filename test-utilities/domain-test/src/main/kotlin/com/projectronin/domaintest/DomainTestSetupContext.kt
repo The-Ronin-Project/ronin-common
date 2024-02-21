@@ -286,6 +286,13 @@ class DomainTestSetupContext internal constructor() {
     }
 
     /**
+     * Allows you to globally override the default authentication configuration for executions of `domainTest`
+     */
+    fun withAuthData(authData: AuthData) {
+        AuthContext.defaultAuthProvider = authData
+    }
+
+    /**
      * Starts all the services
      */
     internal fun start() {

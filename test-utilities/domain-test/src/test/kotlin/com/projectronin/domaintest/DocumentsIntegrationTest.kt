@@ -168,7 +168,7 @@ class DocumentsIntegrationTest {
         }
 
         val assetId: UUID = retryAssertion(240, Duration.ofMillis(500)) {
-            val assetPath = gatewayRequest("/api/v1/tenants/$tenantId/patients/patientId/documents/documentId2")
+            val assetPath = request("/api/v1/tenants/$tenantId/patients/patientId/documents/documentId2")
                 .defaultToken()
                 .execute {
                     val body = it.readBodyValue<Document>()
@@ -182,7 +182,7 @@ class DocumentsIntegrationTest {
                     assertThat(body.createdAt.toInstant()).isEqualTo(referenceDate)
                     body.assetUrl
                 }
-            request("assets", "$assetPath?withData=true")
+            request("$assetPath?withData=true", service = KnownServices.Assets)
                 .defaultToken()
                 .execute {
                     val body = it.body.readValue<PatientAssetGetResponse>()

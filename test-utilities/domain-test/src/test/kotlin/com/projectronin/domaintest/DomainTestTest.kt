@@ -37,13 +37,13 @@ class DomainTestTest {
                 }
             }
 
-            request("auth", "/actuator/info").execute {}
+            request("/actuator/info", service = KnownServices.Auth).execute {}
             assertThat(intercepted).isTrue()
 
             intercepted = false
 
             clearHttpClient()
-            request("auth", "/actuator/info").execute {}
+            request("/actuator/info", service = KnownServices.Auth).execute {}
             assertThat(intercepted).isFalse()
         }
     }
@@ -76,7 +76,7 @@ class DomainTestTest {
     @Test
     fun `should execute and verify a bad request missing field`() = domainTest {
         val badRequest = request()
-            .gatewayPost(
+            .post(
                 path = "/api/v1/tenants/apposnd/patients/apposnd-94xNAMvgsMWzJAh8vEhR9vSioXkGn5/assets",
                 body = requestBody(
                     AssetSchema().apply {
@@ -108,8 +108,7 @@ class DomainTestTest {
     @Test
     fun `should execute and verify a bad request invalid field value`() = domainTest {
         val badRequest = request()
-            .servicePost(
-                service = KnownServices.Assets,
+            .post(
                 path = "/api/v1/tenants/apposnd/patients/apposnd-94xNAMvgsMWzJAh8vEhR9vSioXkGn5/assets",
                 body = """
                     {
@@ -120,7 +119,8 @@ class DomainTestTest {
                       "data": "ByteArray"
                       "resourceType": "baz"
                     }
-                """.trimIndent().toRequestBody("application/json".toMediaType())
+                """.trimIndent().toRequestBody("application/json".toMediaType()),
+                service = KnownServices.Assets
             )
             .configure {
                 bearerAuthorization(
