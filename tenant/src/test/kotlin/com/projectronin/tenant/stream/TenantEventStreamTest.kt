@@ -139,13 +139,16 @@ class TenantEventStreamTest {
     fun `legacy message type`() {
         val eventSlot = slot<RoninEvent<TenantV1Schema>>()
         every { eventHandler.create(capture(eventSlot)) } just runs
-        inputTopic.pipeInput("ronin.tenant.tenant.create/$tenantId", RoninEvent(
-            dataSchema = "https://github.com/projectronin/contract-messaging-tenant/blob/main/src/main/resources/schemas/tenant-v1.schema.json",
-            type = "ronin.ronin-tenant.tenant.create",
-            source = "ronin-tenant-service",
-            resourceId = ResourceId("tenant", tenantId.toString()),
-            data = tenantSchema
-        ))
+        inputTopic.pipeInput(
+            "ronin.tenant.tenant.create/$tenantId",
+            RoninEvent(
+                dataSchema = "https://github.com/projectronin/contract-messaging-tenant/blob/main/src/main/resources/schemas/tenant-v1.schema.json",
+                type = "ronin.ronin-tenant.tenant.create",
+                source = "ronin-tenant-service",
+                resourceId = ResourceId("tenant", tenantId.toString()),
+                data = tenantSchema
+            )
+        )
         val result = eventSlot.captured
         assertThat(result.data.id).isEqualTo(tenantId.value)
         verify(exactly = 1) { eventHandler.create(any()) }
