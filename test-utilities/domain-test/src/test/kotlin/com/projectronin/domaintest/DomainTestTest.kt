@@ -2,7 +2,10 @@ package com.projectronin.domaintest
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.delete
 import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.patch
+import com.github.tomakehurst.wiremock.client.WireMock.put
 import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.projectronin.auth.token.RoninLoginProfile
@@ -17,6 +20,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.io.ByteArrayOutputStream
@@ -24,6 +29,12 @@ import java.net.HttpURLConnection
 
 @ExtendWith(DomainTestExtension::class)
 class DomainTestTest {
+
+    @BeforeEach
+    @AfterEach
+    fun reset() {
+        resetWiremock()
+    }
 
     @Test
     fun `should allow building a new http client and removing it`() = runBlocking {
@@ -223,5 +234,47 @@ class DomainTestTest {
             .isInstanceOf(AssertionError::class.java)
         assertThatThrownBy { MySQLServiceContext.instance.withDatabase("foo", "assets") }
             .isInstanceOf(AssertionError::class.java)
+    }
+
+    @Test
+    fun `should handle a put`() = domainTest {
+        stubFor(
+            put(urlEqualTo("/path/to/put"))
+                .willReturn(
+                    aResponse()
+                        .withStatus(200)
+                )
+        )
+        put(externalWiremockUrl("/path/to/put"), AssetSchema())
+            .token(jwtAuthToken())
+            .execute { }
+    }
+
+    @Test
+    fun `should handle a patch`() = domainTest {
+        stubFor(
+            patch(urlEqualTo("/path/to/patch"))
+                .willReturn(
+                    aResponse()
+                        .withStatus(200)
+                )
+        )
+        patch(externalWiremockUrl("/path/to/patch"), AssetSchema())
+            .token(jwtAuthToken())
+            .execute { }
+    }
+
+    @Test
+    fun `should handle a delete`() = domainTest {
+        stubFor(
+            delete(urlEqualTo("/path/to/delete"))
+                .willReturn(
+                    aResponse()
+                        .withStatus(200)
+                )
+        )
+        delete(externalWiremockUrl("/path/to/delete"))
+            .token(jwtAuthToken())
+            .execute { }
     }
 }
