@@ -22,6 +22,7 @@ class TenantEventStream(
 
     val configs = StreamProperties(tenantStreamConfig.clusterProperties, tenantStreamConfig.applicationId) {
         addDeserializationType<TenantV1Schema>("ronin.tenant.tenant.")
+        addDeserializationType<TenantV1Schema>("ronin.ronin-tenant.tenant.")
         put(DeadLetterDeserializationExceptionHandler.DEAD_LETTER_TOPIC_CONFIG, tenantStreamConfig.dlqTopic)
     }
 

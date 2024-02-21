@@ -136,6 +136,23 @@ class TenantEventStreamTest {
     }
 
     @Test
+    fun `legacy message type`() {
+        val eventSlot = slot<RoninEvent<TenantV1Schema>>()
+        every { eventHandler.create(capture(eventSlot)) } just runs
+        inputTopic.pipeInput("ronin.tenant.tenant.create/$tenantId", RoninEvent(
+            dataSchema = "https://github.com/projectronin/contract-messaging-tenant/blob/main/src/main/resources/schemas/tenant-v1.schema.json",
+            type = "ronin.ronin-tenant.tenant.create",
+            source = "ronin-tenant-service",
+            resourceId = ResourceId("tenant", tenantId.toString()),
+            data = tenantSchema
+        ))
+        val result = eventSlot.captured
+        assertThat(result.data.id).isEqualTo(tenantId.value)
+        verify(exactly = 1) { eventHandler.create(any()) }
+        assertThat(outputTopic.isEmpty).isTrue()
+    }
+
+    @Test
     fun `exception thrown during handling`() {
         val eventSlot = slot<RoninEvent<TenantV1Schema>>()
         every { eventHandler.create(capture(eventSlot)) } throws Exception("Error happened.")
