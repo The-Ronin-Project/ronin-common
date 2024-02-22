@@ -264,7 +264,7 @@ class ProductEngineeringServiceContext internal constructor(
      * Fails if mysql not previously defined with [DomainTestSetupContext.withMySQL]
      */
     fun dependsOnMySQL(dbName: String? = null, username: String? = null, password: String? = null) {
-        _dependencies += SupportingServices.MySql
+        dependsOnSupportingService(SupportingServices.MySql)
         dbName?.let {
             MySQLServiceContext.instance.withDatabase(it, username ?: it, password ?: it)
         }
@@ -275,7 +275,7 @@ class ProductEngineeringServiceContext internal constructor(
      * Fails if kafka not previously defined with [DomainTestSetupContext.withKafka]
      */
     fun dependsOnKafka(vararg topic: String) {
-        _dependencies += SupportingServices.Kafka
+        dependsOnSupportingService(SupportingServices.Kafka)
         KafkaServiceContext.instance.topics(*topic)
     }
 
@@ -284,7 +284,15 @@ class ProductEngineeringServiceContext internal constructor(
      * Fails if wiremock not previously defined with [DomainTestSetupContext.withWireMock]
      */
     fun dependsOnWireMock() {
-        _dependencies += SupportingServices.Wiremock
+        dependsOnSupportingService(SupportingServices.Wiremock)
+    }
+
+    /**
+     * Declares that this service depends on the given supporting service
+     * Fails if wiremock not previously defined with [DomainTestSetupContext.withSupportingService]
+     */
+    fun dependsOnSupportingService(service: DomainTestContainer) {
+        _dependencies += service
     }
 
     /**
@@ -454,13 +462,13 @@ class ProductEngineeringServiceContext internal constructor(
 /**
  * Get the external (in the tests, not other services) URI for the given service.
  */
-fun externalUriFor(serviceName: String): String =
-    ProductEngineeringServiceContext.serviceMap[serviceName]?.let { "http://localhost:${it.getMappedPort(8080)}" } ?: throw IllegalStateException("No started service named $serviceName")
+fun externalUriFor(serviceName: String, path: String = ""): String =
+    ProductEngineeringServiceContext.serviceMap[serviceName]?.let { "http://localhost:${it.getMappedPort(8080)}$path" } ?: throw IllegalStateException("No started service named $serviceName")
 
 /**
  * Get the external (in the tests, not other services) URI for the given service, using a [ServiceDef]
  */
-fun externalUriFor(service: ServiceDef): String = externalUriFor(service.serviceName)
+fun externalUriFor(service: ServiceDef, path: String = ""): String = externalUriFor(service.serviceName, path)
 
 /**
  * Get the external (in the tests, not other services) port that maps to the given port for the service

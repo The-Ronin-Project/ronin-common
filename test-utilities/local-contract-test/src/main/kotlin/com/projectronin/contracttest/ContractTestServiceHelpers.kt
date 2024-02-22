@@ -9,20 +9,26 @@ import java.io.File
  * No different from [com.projectronin.domaintest.domainTest], but maintains contract test naming.
  */
 fun contractTest(block: DomainTestContext.() -> Unit) {
-    DomainTestContext().use { block(it) }
+    DomainTestContext().use {
+        it.withDefaultService(ServiceUnderTest)
+        block(it)
+    }
 }
 
 /**
  * No different from [com.projectronin.domaintest.coDomainTest], but maintains contract test naming.
  */
 suspend fun coContractTest(block: suspend DomainTestContext.() -> Unit) {
-    DomainTestContext().use { block(it) }
+    DomainTestContext().use {
+        it.withDefaultService(ServiceUnderTest)
+        block(it)
+    }
 }
 
 /**
  * Service name of the 'local contract test service under test', that is the service you're building now.
  */
-val localContractTestService: String
+val localContractTestServiceName: String
     get() = "service"
 
 /**

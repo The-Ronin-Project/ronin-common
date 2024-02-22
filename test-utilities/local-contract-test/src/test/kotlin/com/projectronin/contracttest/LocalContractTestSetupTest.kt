@@ -30,16 +30,15 @@ class LocalContractTestSetupTest {
     @Test
     fun shouldCreateAndRetrieveStudent() = contractTest {
         setSessionToken(jwtAuthToken())
-        val studentId = request {
+        val studentId = post("/api/student", service = ServiceUnderTest, body = createStudentRequest.toRequestBody("application/json".toMediaType())) {
             defaultToken()
-            servicePost(localContractTestService, "/api/student", createStudentRequest.toRequestBody("application/json".toMediaType()))
         }.execute(HttpURLConnection.HTTP_CREATED) { response ->
             response.readBodyValue<Map<String, Any>>()["id"].toString()
         }
 
         assertThat(studentId).isNotNull()
 
-        val student = request(localContractTestService, "/api/student/$studentId") {
+        val student = request("/api/student/$studentId", service = ServiceUnderTest) {
             defaultToken()
         }
             .execute { response ->
@@ -60,9 +59,8 @@ class LocalContractTestSetupTest {
     fun shouldFailOnBadAuth() = runBlocking {
         coContractTest {
             setSessionToken(invalidJwtAuthToken())
-            request {
+            post("/api/student", body = createStudentRequest.toRequestBody("application/json".toMediaType())) {
                 defaultToken()
-                servicePost(localContractTestService, "/api/student", createStudentRequest.toRequestBody("application/json".toMediaType()))
             }.execute(HttpURLConnection.HTTP_UNAUTHORIZED) {}
         }
     }
