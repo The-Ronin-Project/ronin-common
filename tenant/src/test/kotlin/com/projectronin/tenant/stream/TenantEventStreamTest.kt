@@ -88,22 +88,22 @@ class TenantEventStreamTest {
 
     @Test
     fun `create happy path`() {
-        val eventSlot = slot<RoninEvent<TenantV1Schema?>>()
+        val eventSlot = slot<RoninEvent<TenantV1Schema>>()
         every { eventHandler.create(capture(eventSlot)) } just runs
         inputTopic.pipeInput("tenant/$tenantId", createEvent)
         val result = eventSlot.captured
-        assertThat(result.data?.id).isEqualTo(tenantId.value)
+        assertThat(result.data.id).isEqualTo(tenantId.value)
         verify(exactly = 1) { eventHandler.create(any()) }
         assertThat(outputTopic.isEmpty).isTrue()
     }
 
     @Test
     fun `update happy path`() {
-        val eventSlot = slot<RoninEvent<TenantV1Schema?>>()
+        val eventSlot = slot<RoninEvent<TenantV1Schema>>()
         every { eventHandler.update(capture(eventSlot)) } just runs
         inputTopic.pipeInput("tenant/$tenantId", updateEvent)
         val result = eventSlot.captured
-        assertThat(result.data?.id).isEqualTo(tenantId.value)
+        assertThat(result.data.id).isEqualTo(tenantId.value)
         verify(exactly = 1) { eventHandler.update(any()) }
         assertThat(outputTopic.isEmpty).isTrue()
     }
@@ -137,7 +137,7 @@ class TenantEventStreamTest {
 
     @Test
     fun `legacy message type`() {
-        val eventSlot = slot<RoninEvent<TenantV1Schema?>>()
+        val eventSlot = slot<RoninEvent<TenantV1Schema>>()
         every { eventHandler.create(capture(eventSlot)) } just runs
         inputTopic.pipeInput(
             "ronin.tenant.tenant.create/$tenantId",
@@ -150,18 +150,18 @@ class TenantEventStreamTest {
             )
         )
         val result = eventSlot.captured
-        assertThat(result.data?.id).isEqualTo(tenantId.value)
+        assertThat(result.data.id).isEqualTo(tenantId.value)
         verify(exactly = 1) { eventHandler.create(any()) }
         assertThat(outputTopic.isEmpty).isTrue()
     }
 
     @Test
     fun `exception thrown during handling`() {
-        val eventSlot = slot<RoninEvent<TenantV1Schema?>>()
+        val eventSlot = slot<RoninEvent<TenantV1Schema>>()
         every { eventHandler.create(capture(eventSlot)) } throws Exception("Error happened.")
         inputTopic.pipeInput("tenant/$tenantId", createEvent)
         val result = eventSlot.captured
-        assertThat(result.data?.id).isEqualTo(tenantId.value)
+        assertThat(result.data.id).isEqualTo(tenantId.value)
         verify(exactly = 1) { eventHandler.create(any()) }
         assertThat(outputTopic.isEmpty).isFalse()
         val dlqRecords = outputTopic.readRecordsToList()

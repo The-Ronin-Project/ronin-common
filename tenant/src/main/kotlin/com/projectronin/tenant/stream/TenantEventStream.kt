@@ -40,13 +40,14 @@ class TenantEventStream(
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun handle(
         command: RoninEvent<TenantV1Schema?>
     ) = runBlocking {
         runCatching {
             when (command.type.split(".").last()) {
-                "create" -> tenantStreamConfig.handler.create(command)
-                "update" -> tenantStreamConfig.handler.update(command)
+                "create" -> tenantStreamConfig.handler.create(command as RoninEvent<TenantV1Schema>)
+                "update" -> tenantStreamConfig.handler.update(command as RoninEvent<TenantV1Schema>)
                 "delete" -> tenantStreamConfig.handler.delete(command)
                 else -> throw Exception("Unknown Tenant event type ${command.type}.")
             }
