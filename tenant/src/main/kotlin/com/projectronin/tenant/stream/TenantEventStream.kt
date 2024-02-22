@@ -1,5 +1,6 @@
 package com.projectronin.tenant.stream
 
+import com.projectronin.common.TenantId
 import com.projectronin.common.telemetry.addToDDTraceSpan
 import com.projectronin.json.tenant.v1.TenantV1Schema
 import com.projectronin.kafka.config.StreamProperties
@@ -40,15 +41,14 @@ class TenantEventStream(
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun handle(
         command: RoninEvent<TenantV1Schema?>
     ) = runBlocking {
         runCatching {
             when (command.type.split(".").last()) {
-                "create" -> tenantStreamConfig.handler.create(command as RoninEvent<TenantV1Schema>)
-                "update" -> tenantStreamConfig.handler.update(command as RoninEvent<TenantV1Schema>)
-                "delete" -> tenantStreamConfig.handler.delete(command)
+                "create" -> tenantStreamConfig.handler.create(command.data!!)
+                "update" -> tenantStreamConfig.handler.update(command.data!!)
+                "delete" -> tenantStreamConfig.handler.delete(TenantId(command.resourceId!!.id))
                 else -> throw Exception("Unknown Tenant event type ${command.type}.")
             }
         }
