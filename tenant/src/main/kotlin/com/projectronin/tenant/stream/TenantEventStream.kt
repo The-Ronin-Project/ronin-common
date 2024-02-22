@@ -31,7 +31,7 @@ class TenantEventStream(
     private fun buildTopology(): Topology {
         return stream<String, RoninEvent<TenantV1Schema?>>(tenantStreamConfig.tenantTopic) { kStream ->
             kStream.filter({ _, value -> value != null }, Named.`as`("FILTER_NULL"))
-                .peek { k, v -> logger.info { "Receiving Tenant message ${v.type}. $k: ${v.resourceId}" } }
+                .peek { k, v -> logger.info { "Receiving Tenant message ${v.resourceId?.type}. $k: ${v.resourceId?.id}" } }
                 .flatMapValues { v ->
                     return@flatMapValues when {
                         handle(v).isFailure -> listOf(v)
