@@ -1,5 +1,6 @@
 package com.projectronin.tenant.stream
 
+import com.projectronin.common.TenantId
 import com.projectronin.common.telemetry.addToDDTraceSpan
 import com.projectronin.json.tenant.v1.TenantV1Schema
 import com.projectronin.kafka.config.StreamProperties
@@ -12,7 +13,6 @@ import kotlinx.coroutines.runBlocking
 import mu.KLogger
 import mu.KotlinLogging
 import org.apache.kafka.streams.Topology
-import org.apache.kafka.streams.kstream.Named
 
 class TenantEventStream(
     private val tenantStreamConfig: TenantStreamConfig
@@ -29,9 +29,8 @@ class TenantEventStream(
     fun initialize() = kafkaStreams(topology, configs).start()
 
     private fun buildTopology(): Topology {
-        return stream<String, RoninEvent<TenantV1Schema>>(tenantStreamConfig.tenantTopic) { kStream ->
-            kStream.filter({ _, value -> value != null }, Named.`as`("FILTER_NULL"))
-                .peek { k, v -> logger.info { "Receiving Tenant message ${v.type}. $k: ${v.data.id}" } }
+        return stream<String, RoninEvent<TenantV1Schema?>>(tenantStreamConfig.tenantTopic) { kStream ->
+            kStream.peek { k, v -> logger.info { "Receiving Tenant message ${v.type}: $k" } }
                 .flatMapValues { v ->
                     return@flatMapValues when {
                         handle(v).isFailure -> listOf(v)
@@ -43,23 +42,23 @@ class TenantEventStream(
     }
 
     private fun handle(
-        command: RoninEvent<TenantV1Schema>
+        command: RoninEvent<TenantV1Schema?>
     ) = runBlocking {
         runCatching {
             when (command.type.split(".").last()) {
-                "create" -> tenantStreamConfig.handler.create(command)
-                "update" -> tenantStreamConfig.handler.update(command)
-                "delete" -> tenantStreamConfig.handler.delete(command)
+                "create" -> tenantStreamConfig.handler.create(command.data!!)
+                "update" -> tenantStreamConfig.handler.update(command.data!!)
+                "delete" -> tenantStreamConfig.handler.delete(TenantId(command.resourceId!!.id))
                 else -> throw Exception("Unknown Tenant event type ${command.type}.")
             }
         }
             .onSuccess {
                 val action = command.type.split(".").last().replaceFirstChar { it.uppercase() }
-                logger.info { "${action}d tenant ${command.tenantId}." }
+                logger.info { "${action}d tenant ${command.resourceId?.id}." }
             }
             .onFailure {
                 it.addToDDTraceSpan()
-                logger.warn { "Unable to process Tenant event. ${it.message}" }
+                logger.warn(it) { "Unable to process Tenant event. ${it.message}" }
             }
     }
 }
