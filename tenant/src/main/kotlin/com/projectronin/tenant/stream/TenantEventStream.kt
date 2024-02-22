@@ -29,9 +29,9 @@ class TenantEventStream(
     fun initialize() = kafkaStreams(topology, configs).start()
 
     private fun buildTopology(): Topology {
-        return stream<String, RoninEvent<TenantV1Schema>>(tenantStreamConfig.tenantTopic) { kStream ->
+        return stream<String, RoninEvent<TenantV1Schema?>>(tenantStreamConfig.tenantTopic) { kStream ->
             kStream.filter({ _, value -> value != null }, Named.`as`("FILTER_NULL"))
-                .peek { k, v -> logger.info { "Receiving Tenant message ${v.type}. $k: ${v.data.id}" } }
+                .peek { k, v -> logger.info { "Receiving Tenant message ${v.type}. $k: ${v.resourceId}" } }
                 .flatMapValues { v ->
                     return@flatMapValues when {
                         handle(v).isFailure -> listOf(v)
@@ -43,7 +43,7 @@ class TenantEventStream(
     }
 
     private fun handle(
-        command: RoninEvent<TenantV1Schema>
+        command: RoninEvent<TenantV1Schema?>
     ) = runBlocking {
         runCatching {
             when (command.type.split(".").last()) {
