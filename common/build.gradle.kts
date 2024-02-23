@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.kotlin.logging)
+    api(libs.kotlin.logging)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.micrometer.statsd)
     implementation(libs.datadog.api)

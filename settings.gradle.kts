@@ -10,6 +10,9 @@ include(":tenant")
 include(":test-utilities:jwt-auth-test")
 include(":test-utilities:domain-test")
 include(":test-utilities:local-contract-test")
+include(":oci")
+include(":oci:objectstorage")
+include(":filesystem")
 
 // catalog
 include(":ronin-common-catalog")
@@ -36,7 +39,7 @@ dependencyResolutionManagement {
     }
     versionCatalogs {
         create("roningradle") {
-            from("com.projectronin.services.gradle:ronin-gradle-catalog:2.3.12")
+            from("com.projectronin.services.gradle:ronin-gradle-catalog:2.3.13")
         }
     }
 }
