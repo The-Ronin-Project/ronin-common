@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     api(project(":oci"))
-    implementation(project(":filesystem"))
+    implementation(project(":bucketstorage"))
 
     api("com.oracle.oci.sdk:oci-java-sdk-objectstorage")
 
@@ -12,10 +12,4 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
-}
-
-tasks.test {
-    testLogging {
-        showStandardStreams = true
-    }
 }

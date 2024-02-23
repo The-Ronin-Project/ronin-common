@@ -1,37 +1,35 @@
-package com.projectronin.filesystem
+package com.projectronin.bucketstorage.filesystem
 
-import com.projectronin.filesystem.exceptions.FileNotDeletedException
+import com.projectronin.bucketstorage.BucketStorage
+import com.projectronin.bucketstorage.exceptions.FileNotDeletedException
 import mu.KLogger
 import mu.KotlinLogging
 import java.io.File
 import java.io.FileNotFoundException
 
-class LocalFileSystemSystem(
+class LocalFileBucketStorage(
     private val rootDirectory: String
-) : FileSystem {
+) : BucketStorage {
     private val logger: KLogger = KotlinLogging.logger { }
 
-    override fun saveFile(bucketName: String, objectName: String, content: ByteArray): Result<Unit> {
+    override fun write(bucketName: String, objectName: String, content: ByteArray): Result<Unit> = runCatching {
         val path = getFilePath(bucketName, objectName)
-
         val dirs = objectName.substringBefore("/")
+
         File("$rootDirectory/$bucketName/$dirs").mkdirs()
-        return runCatching {
-            File(path).writeBytes(content)
-        }
+        File(path).writeBytes(content)
     }
 
-    override fun getFile(bucketName: String, objectName: String): Result<ByteArray> {
+    override fun read(bucketName: String, objectName: String): Result<ByteArray> = runCatching {
         val path = getFilePath(bucketName, objectName)
         val file = File(path)
-        if (file.exists()) {
-            return Result.success(file.readBytes())
+        if (!file.exists()) {
+            throw FileNotFoundException(path)
         }
-        logger.info("File not found for retrieval at location: $path")
-        return Result.failure(FileNotFoundException(path))
+        file.readBytes()
     }
 
-    override fun deleteFile(bucketName: String, objectName: String): Result<Unit> {
+    override fun delete(bucketName: String, objectName: String): Result<Unit> {
         val path = getFilePath(bucketName, objectName)
         val file = File(path)
 

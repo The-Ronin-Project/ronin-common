@@ -11,8 +11,8 @@ include(":test-utilities:jwt-auth-test")
 include(":test-utilities:domain-test")
 include(":test-utilities:local-contract-test")
 include(":oci")
-include(":oci:objectstorage")
-include(":filesystem")
+include(":oci:oci-objectstorage")
+include(":bucketstorage")
 
 // catalog
 include(":ronin-common-catalog")

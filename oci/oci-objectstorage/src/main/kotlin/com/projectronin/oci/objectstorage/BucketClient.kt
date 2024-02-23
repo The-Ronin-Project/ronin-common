@@ -79,106 +79,97 @@ class BucketClient(
         }
     }
 
-    fun deleteBucket(bucketName: String): Result<Unit> {
-        return runCatching {
-            clients.secondary?.let { secondary ->
-                val replicaBucket = "$bucketName-copy"
+    fun deleteBucket(bucketName: String): Result<Unit> = runCatching {
+        clients.secondary?.let { secondary ->
+            val replicaBucket = "$bucketName-copy"
 
-                // Retrieve the current replication policies
-                val policies = clients.primary.listReplicationPolicies(
-                    ListReplicationPoliciesRequest.builder()
-                        .namespaceName(namespace)
-                        .bucketName(bucketName)
-                        .build()
+            // Retrieve the current replication policies
+            val policies = clients.primary.listReplicationPolicies(
+                ListReplicationPoliciesRequest.builder()
+                    .namespaceName(namespace)
+                    .bucketName(bucketName)
+                    .build()
+            )
+
+            val policy = policies.items.find { it.destinationBucketName == replicaBucket }
+                ?: throw OciReplicationException(
+                    "Delete request on bucket $bucketName but failed to find existing " +
+                        "replication policy for replica bucket $replicaBucket."
                 )
 
-                val policy = policies.items.find { it.destinationBucketName == replicaBucket }
-                    ?: throw OciReplicationException(
-                        "Delete request on bucket $bucketName but failed to find existing " +
-                            "replication policy for replica bucket $replicaBucket."
-                    )
+            // First delete the replication to make the backup bucket writeable.
+            clients.primary.deleteReplicationPolicy(
+                DeleteReplicationPolicyRequest.builder()
+                    .bucketName(bucketName)
+                    .namespaceName(namespace)
+                    .replicationId(policy.id)
+                    .build()
+            )
 
-                // First delete the replication to make the backup bucket writeable.
-                clients.primary.deleteReplicationPolicy(
-                    DeleteReplicationPolicyRequest.builder()
-                        .bucketName(bucketName)
-                        .namespaceName(namespace)
-                        .replicationId(policy.id)
-                        .build()
-                )
-
-                // After replication policy is deleted, delete the replica bucket
-                secondary.deleteBucket(
-                    DeleteBucketRequest.builder()
-                        .bucketName(replicaBucket)
-                        .namespaceName(namespace)
-                        .build()
-                )
-            }
-
-            // Finally delete the primary bucket
-            clients.primary.deleteBucket(
+            // After replication policy is deleted, delete the replica bucket
+            secondary.deleteBucket(
                 DeleteBucketRequest.builder()
-                    .bucketName(bucketName)
+                    .bucketName(replicaBucket)
                     .namespaceName(namespace)
                     .build()
             )
         }
+
+        // Finally delete the primary bucket
+        clients.primary.deleteBucket(
+            DeleteBucketRequest.builder()
+                .bucketName(bucketName)
+                .namespaceName(namespace)
+                .build()
+        )
     }
 
-    fun writeObject(bucketName: String, objectName: String, content: ByteArray): Result<Unit> {
-        return runCatching {
-            clients.primary.putObject(
-                PutObjectRequest.builder()
-                    .bucketName(bucketName)
-                    .namespaceName(namespace)
-                    .objectName(objectName)
-                    .contentMD5(content.md5)
-                    .putObjectBody(content.inputStream())
-                    .build()
-            )
+    fun readObject(bucketName: String, objectName: String): Result<ByteArray> = runCatching {
+        val objectResponse = clients.primary.getObject(
+            GetObjectRequest.builder()
+                .namespaceName(namespace)
+                .bucketName(bucketName)
+                .objectName(objectName)
+                .build()
+        )
+
+        val objectContent = objectResponse.inputStream.use { it.readAllBytes() }
+        // Check MD5 in response to calculated of the content
+        check(objectContent.md5Equals(objectResponse.contentMd5)) {
+            "Downloaded file from Object Store checksum didn't match"
         }
+
+        return@runCatching objectContent
     }
 
-    fun getObject(bucketName: String, objectName: String): Result<ByteArray> {
-        return runCatching {
-            val objectResponse = clients.primary.getObject(
-                GetObjectRequest.builder()
-                    .namespaceName(namespace)
-                    .bucketName(bucketName)
-                    .objectName(objectName)
-                    .build()
-            )
-
-            val objectContent = objectResponse.inputStream.use { it.readAllBytes() }
-            // Check MD5 in response to calculated of the content
-            check(objectContent.md5Equals(objectResponse.contentMd5)) {
-                "Downloaded file from Object Store checksum didn't match"
-            }
-
-            return@runCatching objectContent
-        }
+    fun writeObject(bucketName: String, objectName: String, content: ByteArray): Result<Unit> = runCatching {
+        clients.primary.putObject(
+            PutObjectRequest.builder()
+                .bucketName(bucketName)
+                .namespaceName(namespace)
+                .objectName(objectName)
+                .contentMD5(content.md5())
+                .putObjectBody(content.inputStream())
+                .build()
+        )
     }
 
-    fun deleteObject(bucketName: String, objectName: String): Result<Unit> {
-        return runCatching {
-            clients.primary.deleteObject(
-                DeleteObjectRequest.builder()
-                    .namespaceName(namespace)
-                    .bucketName(bucketName)
-                    .objectName(objectName)
-                    .build()
-            )
-        }
+    fun deleteObject(bucketName: String, objectName: String): Result<Unit> = runCatching {
+        clients.primary.deleteObject(
+            DeleteObjectRequest.builder()
+                .namespaceName(namespace)
+                .bucketName(bucketName)
+                .objectName(objectName)
+                .build()
+        )
     }
 }
 
 fun ByteArray.md5Equals(md5: String): Boolean {
-    return md5 == this.md5
+    return md5 == this.md5()
 }
 
-val ByteArray.md5: String
-    get() {
-        val md = MessageDigest.getInstance("MD5")
-        return Base64.getEncoder().encodeToString(md.digest(this))
-    }
+fun ByteArray.md5(): String {
+    val md = MessageDigest.getInstance("MD5")
+    return Base64.getEncoder().encodeToString(md.digest(this))
+}

@@ -7,12 +7,10 @@ import com.projectronin.oci.OciProperties
 
 class ObjectStorageClients(
     ociProperties: OciProperties,
-    val authProvider: AbstractAuthenticationDetailsProvider
+    private val authProvider: AbstractAuthenticationDetailsProvider
 ) {
     val primary: RoninOciClient = createClient(ociProperties.primaryRegion)
     val secondary: RoninOciClient? = ociProperties.secondaryRegion?.let { createClient(it) }
-
-    fun hasSecondary(): Boolean = secondary != null
 
     private fun createClient(region: String): RoninOciClient {
         return RoninOciClient(
