@@ -1,5 +1,7 @@
 package com.projectronin.oci.objectstorage
 
+import com.oracle.bmc.model.BmcException
+import com.oracle.bmc.objectstorage.ObjectStorage
 import com.oracle.bmc.objectstorage.model.Bucket
 import com.oracle.bmc.objectstorage.model.CreateBucketDetails
 import com.oracle.bmc.objectstorage.model.CreateReplicationPolicyDetails
@@ -11,21 +13,26 @@ import com.oracle.bmc.objectstorage.requests.DeleteReplicationPolicyRequest
 import com.oracle.bmc.objectstorage.requests.GetObjectRequest
 import com.oracle.bmc.objectstorage.requests.ListReplicationPoliciesRequest
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest
+import com.projectronin.bucketstorage.Md5
+import com.projectronin.bucketstorage.md5
 import mu.KLogger
 import mu.KotlinLogging
-import java.security.MessageDigest
-import java.util.Base64
+import java.time.Instant
 
 class BucketClient(
-    private val clients: ObjectStorageClients,
-    private val namespace: String,
-    private val compartment: String
+    val namespace: String,
+    val compartment: String,
+    val primary: RoninOciClient,
+    val secondary: RoninOciClient? = null
 ) {
     private val logger: KLogger = KotlinLogging.logger { }
 
+    var lastHealthCheck: Instant = Instant.now()
+    var lastHealthException: BmcException? = null
+
     fun createBucket(bucketName: String): Result<Unit> {
         return runCatching {
-            clients.primary.createBucket(
+            primary.createBucket(
                 CreateBucketRequest.builder()
                     .namespaceName(namespace)
                     .createBucketDetails(
@@ -40,9 +47,10 @@ class BucketClient(
                     )
                     .build()
             )
-            logger.info("Bucket $bucketName created in primary region ${clients.primary.region}.")
 
-            clients.secondary?.let { secondary ->
+            logger.info("Bucket $bucketName created in primary region ${primary.region}.")
+
+            secondary?.let { secondary ->
                 val replicaBucket = "$bucketName-copy"
                 secondary.createBucket(
                     CreateBucketRequest.builder()
@@ -61,7 +69,7 @@ class BucketClient(
                 )
                 logger.info("Bucket $replicaBucket created in secondary region ${secondary.region}.")
 
-                clients.primary.createReplicationPolicy(
+                primary.createReplicationPolicy(
                     CreateReplicationPolicyRequest.builder()
                         .bucketName(bucketName)
                         .namespaceName(namespace)
@@ -80,11 +88,11 @@ class BucketClient(
     }
 
     fun deleteBucket(bucketName: String): Result<Unit> = runCatching {
-        clients.secondary?.let { secondary ->
+        secondary?.let { secondary ->
             val replicaBucket = "$bucketName-copy"
 
             // Retrieve the current replication policies
-            val policies = clients.primary.listReplicationPolicies(
+            val policies = primary.listReplicationPolicies(
                 ListReplicationPoliciesRequest.builder()
                     .namespaceName(namespace)
                     .bucketName(bucketName)
@@ -98,7 +106,7 @@ class BucketClient(
                 )
 
             // First delete the replication to make the backup bucket writeable.
-            clients.primary.deleteReplicationPolicy(
+            primary.deleteReplicationPolicy(
                 DeleteReplicationPolicyRequest.builder()
                     .bucketName(bucketName)
                     .namespaceName(namespace)
@@ -116,7 +124,7 @@ class BucketClient(
         }
 
         // Finally delete the primary bucket
-        clients.primary.deleteBucket(
+        primary.deleteBucket(
             DeleteBucketRequest.builder()
                 .bucketName(bucketName)
                 .namespaceName(namespace)
@@ -125,7 +133,7 @@ class BucketClient(
     }
 
     fun readObject(bucketName: String, objectName: String): Result<ByteArray> = runCatching {
-        val objectResponse = clients.primary.getObject(
+        val objectResponse = primary.getObject(
             GetObjectRequest.builder()
                 .namespaceName(namespace)
                 .bucketName(bucketName)
@@ -135,7 +143,7 @@ class BucketClient(
 
         val objectContent = objectResponse.inputStream.use { it.readAllBytes() }
         // Check MD5 in response to calculated of the content
-        check(objectContent.md5Equals(objectResponse.contentMd5)) {
+        check(objectContent.md5() == Md5(objectResponse.contentMd5)) {
             "Downloaded file from Object Store checksum didn't match"
         }
 
@@ -143,19 +151,19 @@ class BucketClient(
     }
 
     fun writeObject(bucketName: String, objectName: String, content: ByteArray): Result<Unit> = runCatching {
-        clients.primary.putObject(
+        primary.putObject(
             PutObjectRequest.builder()
                 .bucketName(bucketName)
                 .namespaceName(namespace)
                 .objectName(objectName)
-                .contentMD5(content.md5())
+                .contentMD5(content.md5().toString())
                 .putObjectBody(content.inputStream())
                 .build()
         )
     }
 
     fun deleteObject(bucketName: String, objectName: String): Result<Unit> = runCatching {
-        clients.primary.deleteObject(
+        primary.deleteObject(
             DeleteObjectRequest.builder()
                 .namespaceName(namespace)
                 .bucketName(bucketName)
@@ -165,11 +173,5 @@ class BucketClient(
     }
 }
 
-fun ByteArray.md5Equals(md5: String): Boolean {
-    return md5 == this.md5()
-}
-
-fun ByteArray.md5(): String {
-    val md = MessageDigest.getInstance("MD5")
-    return Base64.getEncoder().encodeToString(md.digest(this))
-}
+class RoninOciClient(val region: String, private val client: ObjectStorage) :
+    ObjectStorage by client
