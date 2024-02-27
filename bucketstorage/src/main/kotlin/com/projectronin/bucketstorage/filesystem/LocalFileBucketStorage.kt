@@ -13,7 +13,7 @@ class LocalFileBucketStorage(
     private val logger: KLogger = KotlinLogging.logger { }
 
     override fun write(bucketName: String, objectName: String, content: ByteArray): Result<Unit> = runCatching {
-        val path = getFilePath(bucketName, objectName)
+        val path = pathFrom(bucketName, objectName)
         val dirs = objectName.substringBefore("/")
 
         File("$rootDirectory/$bucketName/$dirs").mkdirs()
@@ -21,7 +21,7 @@ class LocalFileBucketStorage(
     }
 
     override fun read(bucketName: String, objectName: String): Result<ByteArray> = runCatching {
-        val path = getFilePath(bucketName, objectName)
+        val path = pathFrom(bucketName, objectName)
         val file = File(path)
         if (!file.exists()) {
             throw FileNotFoundException(path)
@@ -30,19 +30,19 @@ class LocalFileBucketStorage(
     }
 
     override fun delete(bucketName: String, objectName: String): Result<Unit> {
-        val path = getFilePath(bucketName, objectName)
+        val path = pathFrom(bucketName, objectName)
         val file = File(path)
 
-        return runCatching {
-            if (file.exists() && !file.delete()) {
-                throw FileNotDeletedException(path)
-            }
-        }.onFailure {
-            logger.info("File not deleted for location: $path. ${it.message}")
+        if (!file.exists()) {
+            return Result.failure(FileNotDeletedException(path))
         }
+
+        return runCatching { file.delete() }
+            .mapCatching { }
+            .recoverCatching { throw FileNotDeletedException(path) }
     }
 
-    private fun getFilePath(bucketName: String, objectName: String): String {
+    private fun pathFrom(bucketName: String, objectName: String): String {
         return "${rootDirectory}$bucketName/$objectName"
     }
 }
