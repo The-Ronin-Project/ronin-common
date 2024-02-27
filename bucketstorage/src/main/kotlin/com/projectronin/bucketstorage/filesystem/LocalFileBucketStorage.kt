@@ -2,15 +2,12 @@ package com.projectronin.bucketstorage.filesystem
 
 import com.projectronin.bucketstorage.BucketStorage
 import com.projectronin.bucketstorage.exceptions.FileNotDeletedException
-import mu.KLogger
-import mu.KotlinLogging
 import java.io.File
 import java.io.FileNotFoundException
 
 class LocalFileBucketStorage(
     private val rootDirectory: String
 ) : BucketStorage {
-    private val logger: KLogger = KotlinLogging.logger { }
 
     override fun write(bucketName: String, objectName: String, content: ByteArray): Result<Unit> = runCatching {
         val path = pathFrom(bucketName, objectName)
