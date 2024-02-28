@@ -400,7 +400,6 @@ class ProductEngineeringServiceContext internal constructor(
                 if (coverageViable) {
                     @Suppress("DEPRECATION")
                     withFileSystemBind(agentJarLocation.absolutePath, internalCoverageAgentPath)
-                        .withFileSystemBind(coverageDir.absolutePath, internalCoverageOutputPath)
                 } else {
                     this
                 }
