@@ -1,6 +1,9 @@
 package com.projectronin.domaintest
 
+import mu.KLogger
+import mu.KotlinLogging
 import org.intellij.lang.annotations.Language
+import org.jacoco.core.tools.ExecDumpClient
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.Network
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy
@@ -9,7 +12,6 @@ import org.testcontainers.utility.DockerImageName
 import java.io.File
 import java.lang.management.ManagementFactory
 import java.time.Duration
-import java.util.UUID
 
 /**
  * Context for a single PE service.  See [DomainTestSetupContext.withProductEngineeringService].  Specific useful methods are described here.
@@ -25,6 +27,8 @@ class ProductEngineeringServiceContext internal constructor(
     companion object {
         internal val serviceMap = mutableMapOf<String, GenericContainer<*>>()
     }
+
+    private val logger: KLogger = KotlinLogging.logger { }
 
     private val applicationRunDirectory = testRunDirectory.resolve(serviceName).also { it.mkdirs() }
     private val _dependencies = mutableSetOf<DomainTestContainer>()
@@ -356,7 +360,8 @@ class ProductEngineeringServiceContext internal constructor(
 
                 val newJavaAgentArgument = javaAgentArgument
                     .replace(jarPathPattern, "-javaagent:$internalCoverageAgentPath")
-                    .replace("build/jacoco/.*?\\.exec".toRegex(), "$internalCoverageOutputPath/test-${UUID.randomUUID()}.exec")
+                    .replace("destfile=.*\\.exec,?".toRegex(), "")
+                    .replace("output=file", "output=tcpserver,address=*,port=6300")
 
                 coverageViable = true
 
@@ -376,7 +381,7 @@ class ProductEngineeringServiceContext internal constructor(
         configPair?.let { serviceConfigFile.writeText(it.second) }
 
         val options = debuggingOptions() + coverageOptions()
-        val ports = listOf(8080) + if (enableDebugging) listOf(5005) else emptyList()
+        val ports = listOf(8080) + (if (enableDebugging) listOf(5005) else emptyList()) + (if (coverageViable) listOf(6300) else emptyList())
 
         return GenericContainer(DockerImageName.parse("docker-proxy.devops.projectronin.io/$imageName:$version"))
             .withNetwork(network)
@@ -411,6 +416,18 @@ class ProductEngineeringServiceContext internal constructor(
         serviceMap += serviceName to container
 
         writeDebugConfigIfPossible(container)
+    }
+
+    override fun teardown(container: GenericContainer<*>) {
+        if (coverageViable && container.isRunning()) {
+            runCatching {
+                val client = ExecDumpClient()
+                client.dump("localhost", container.getMappedPort(6300)).save(coverageDir.resolve("test-$serviceName.exec"), false)
+            }
+                .onFailure {
+                    logger.error(it) { "Failure to dump coverage." }
+                }
+        }
     }
 
     private fun writeDebugConfigIfPossible(container: GenericContainer<*>) {

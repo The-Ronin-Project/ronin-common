@@ -33,7 +33,6 @@ interface DomainTestContainerContext {
      */
     fun bootstrap(container: GenericContainer<*>)
 
-
     /**
      * Before a container is shut down, do something.  Maybe you need
      * to extract a file.
