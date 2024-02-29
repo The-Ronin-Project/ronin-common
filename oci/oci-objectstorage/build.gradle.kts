@@ -4,9 +4,8 @@ plugins {
 
 dependencies {
     api(project(":oci"))
-    implementation(project(":bucketstorage"))
-
-    api("com.oracle.oci.sdk:oci-java-sdk-objectstorage")
+    api(project(":bucketstorage"))
+    implementation(libs.ocisdk.objectstorage)
 
     testImplementation(libs.assertj)
     testImplementation(libs.kotlinx.coroutines.core)

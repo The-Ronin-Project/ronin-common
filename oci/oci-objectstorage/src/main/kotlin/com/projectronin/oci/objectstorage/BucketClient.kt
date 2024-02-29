@@ -1,7 +1,6 @@
 package com.projectronin.oci.objectstorage
 
 import com.oracle.bmc.model.BmcException
-import com.oracle.bmc.objectstorage.ObjectStorage
 import com.oracle.bmc.objectstorage.model.Bucket
 import com.oracle.bmc.objectstorage.model.CreateBucketDetails
 import com.oracle.bmc.objectstorage.model.CreateReplicationPolicyDetails
@@ -22,8 +21,8 @@ import java.time.Instant
 class BucketClient(
     val namespace: String,
     val compartment: String,
-    val primary: RoninOciClient,
-    val secondary: RoninOciClient? = null
+    val primary: OciObjectStorageClient,
+    val secondary: OciObjectStorageClient? = null
 ) {
     private val logger: KLogger = KotlinLogging.logger { }
 
@@ -172,6 +171,3 @@ class BucketClient(
         )
     }
 }
-
-class RoninOciClient(val region: String, private val client: ObjectStorage) :
-    ObjectStorage by client

@@ -27,8 +27,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class BucketClientTest {
-    private val primary = mockk<RoninOciClient>()
-    private val secondary = mockk<RoninOciClient>()
+    private val primary = mockk<OciObjectStorageClient>()
+    private val secondary = mockk<OciObjectStorageClient>()
 
     private val namespace = "oci_namespace"
     private val compartment = "compartment.ocid"
