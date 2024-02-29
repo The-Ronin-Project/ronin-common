@@ -24,6 +24,7 @@ testcontainers = "1.19.4"
 junit = "5.10.1"
 classgraph = "4.8.165"
 testcontainers-wiremock = "1.0-alpha-13"
+jacoco = "0.8.9"
 
 [libraries]
 contract-messaging-tenant-v1 = { module = "com.projectronin.contract.event.tenant:contract-messaging-tenant-v1", version.ref = "contract-messaging-tenant-v1" }
@@ -84,6 +85,8 @@ testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.re
 testcontainers-wiremock = { module = "org.wiremock.integrations.testcontainers:wiremock-testcontainers-module", version.ref = "testcontainers-wiremock" }
 
 junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
+
+jacoco-core = { module = "org.jacoco:org.jacoco.core", version.ref = "jacoco" }
 
 [bundles]
 jackson = ["jackson-kotlin", "jackson-datatype-jsr310", "jackson-module-parameterNames"]
