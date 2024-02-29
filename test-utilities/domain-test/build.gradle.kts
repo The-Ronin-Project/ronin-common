@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.junit.api)
     implementation(libs.hazelcast)
     implementation(libs.classgraph)
+    implementation(libs.jacoco.core)
 
     compileOnly(libs.jetbrains.annotations)
 

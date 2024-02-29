@@ -344,7 +344,13 @@ class DomainTestSetupContext internal constructor() {
         services.values.forEach { service ->
             synchronized(service) {
                 logger.info("Stopping ${service.serviceName}")
-                service.container?.stop()
+                when (val container = service.container) {
+                    null -> {}
+                    else -> {
+                        service.context.teardown(container)
+                        container.stop()
+                    }
+                }
             }
         }
     }
